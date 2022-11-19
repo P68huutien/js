@@ -13,8 +13,8 @@ function latinConvert(str) {
 }
 /////////////////////////////
 var cmtCount = 0, cmtList
-  , excludeWords = ['khùng', 'điên', '@', 'chết']
-  , minCmtLength = 7
+  , excludeWords = ['khùng', 'điên', '@', 'chết', 'lồn', 'đụ ', 'cặc', 'bướm', 'chịch', 'súc sinh', 'bú ','súc vật', 'địt']
+  , minCmtLength = 8
   ;
 function checkExcludeWord(s) {
   let x = false;
