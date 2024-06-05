@@ -3,7 +3,7 @@ javascript:(function(){
     let startTime = 0;
     let endTime = 0;
     let looping = false;
-    let loopCount = 10; // Số lần lặp lại
+    let loopCount = 30; // Số lần lặp lại
     let currentLoop = 0;
 
     // Lấy phần tử video từ trang
@@ -14,7 +14,7 @@ javascript:(function(){
         if (looping && video.currentTime >= endTime) {
             video.pause();
             currentLoop++;
-            console.log(`Lặp lại lần ${currentLoop} trong tổng số ${loopCount}`);
+            console.log(`Lặp lại lần ${currentLoop} / ${loopCount}`);
             const segmentDuration = endTime - startTime;
             const pauseDuration = segmentDuration * 2 + 1; // Thời gian nghỉ gấp đôi thời gian đoạn video + 1 giây
             if (currentLoop < loopCount) {
@@ -78,7 +78,7 @@ javascript:(function(){
                 adjustTime("end", -1);
                 break;
             case 'f':
-                adjustTime("end", 1);
+                adjustTime("end", 1); // Chỉ điều chỉnh thời gian kết thúc thêm 1 giây
                 break;
             case 'z':
                 adjustTime("start", -0.1);
