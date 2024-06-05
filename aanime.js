@@ -4,7 +4,7 @@ let startTime = 0;
 let endTime = 0;
 const pauseDuration = 3; // seconds
 let looping = false;
-let loopCount = 40;
+let loopCount = 10; // Adjusted to 10 times
 let currentLoop = 0;
 
 // Get the video element from the page
@@ -102,21 +102,4 @@ document.addEventListener('keydown', (event) => {
     case '2':
       adjustPlaybackRate(-3);
       break;
-    case '3':
-      adjustPlaybackRate(-5);
-      break;
-    case '4':
-      adjustPlaybackRate(1);
-      break;
-    case '5':
-      adjustPlaybackRate(3);
-      break;
-    case '6':
-      adjustPlaybackRate(5);
-      break;
-    default:
-      break;
-  }
-});
-
-})();
+    case '
