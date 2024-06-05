@@ -4,7 +4,7 @@ let startTime = 0;
 let endTime = 0;
 const pauseDuration = 3; // seconds
 let looping = false;
-let loopCount = 20;
+let loopCount = 40;
 let currentLoop = 0;
 
 // Get the video element from the page
