@@ -1,3 +1,4 @@
+javascript:(function(){
 // Initialize variables for start and end time, pause duration, loop count, and loop status
 let startTime = 0;
 let endTime = 0;
@@ -14,6 +15,7 @@ function loopVideo() {
   if (looping && video.currentTime >= endTime) {
     video.pause();
     currentLoop++;
+    console.log(`Loop ${currentLoop} of ${loopCount}`);
     if (currentLoop < loopCount) {
       setTimeout(() => {
         video.currentTime = startTime;
@@ -21,6 +23,7 @@ function loopVideo() {
       }, pauseDuration * 1000);
     } else {
       looping = false;
+      console.log("Looping complete.");
     }
   }
 }
@@ -115,3 +118,5 @@ document.addEventListener('keydown', (event) => {
       break;
   }
 });
+
+})();
