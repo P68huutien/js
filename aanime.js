@@ -40,6 +40,9 @@ javascript:(function(){
             endTime = Math.max(startTime + 0.1, endTime + delta);
         }
         console.log(`Thời gian bắt đầu: ${startTime.toFixed(2)}s, Thời gian kết thúc: ${endTime.toFixed(2)}s`);
+        // Phát lại video từ thời gian bắt đầu mới
+        video.currentTime = startTime;
+        video.play();
     }
 
     // Hàm để điều chỉnh tốc độ phát video
