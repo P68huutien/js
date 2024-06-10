@@ -1,25 +1,57 @@
 javascript:(function(){
-    // Khởi tạo các biến cho thời gian bắt đầu và kết thúc, số lần lặp, và trạng thái lặp 
     let startTime = 0;
     let endTime = 0;
     let looping = false;
-    let loopCount = 30; // Số lần lặp lại
+    let loopCount = 30;
     let currentLoop = 0;
+    let isPaused = false;
 
-    // Lấy phần tử video từ trang
     const video = document.querySelector('video');
 
-    // Hàm để lặp lại đoạn video
+    // Tạo phần tử HTML để hiển thị thông số
+    const infoDiv = document.createElement('div');
+    infoDiv.style.position = 'fixed';
+    infoDiv.style.top = '10px';
+    infoDiv.style.left = '10px';
+    infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    infoDiv.style.color = 'white';
+    infoDiv.style.padding = '10px';
+    infoDiv.style.borderRadius = '5px';
+    infoDiv.style.zIndex = '1000';
+    document.body.appendChild(infoDiv);
+
+    function updateInfo() {
+        infoDiv.innerHTML = `
+            <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
+            <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
+            <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
+            <p>Phím hướng dẫn:</p>
+            <p>1, 2, 3, 4, 5, 6: Điều chỉnh tốc độ phát</p>
+            <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
+            <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
+            <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
+            <p>c, v: Điều chỉnh điểm kết thúc (-0.1s, +0.1s)</p>
+            <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
+            <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
+            <p>h: Hủy quá trình lặp lại</p>
+            <p>j, k: Tăng/giảm số lần lặp lại</p>
+            <p>Nhấn F12 để đóng bảng điều khiển.</p>
+        `;
+    }
+
     function loopVideo() {
-        if (looping && video.currentTime >= endTime) {
+        if (looping && video.currentTime >= endTime && !isPaused) {
+            isPaused = true;
             video.pause();
             currentLoop++;
-            console.log(`Lặp lại lần ${currentLoop} / ${loopCount}`);
+            updateInfo();  // Cập nhật thông tin
             const segmentDuration = endTime - startTime;
-            const pauseDuration = segmentDuration * 2 + 1; // Thời gian nghỉ gấp đôi thời gian đoạn video + 1 giây
+            const pauseDuration = segmentDuration * 2 + 1;
             if (currentLoop < loopCount) {
                 setTimeout(() => {
                     video.currentTime = startTime;
+                    isPaused = false;
                     video.play();
                 }, pauseDuration * 1000);
             } else {
@@ -29,44 +61,56 @@ javascript:(function(){
         }
     }
 
-    // Lắng nghe sự kiện cập nhật thời gian video
+    function restartLoop() {
+        isPaused = true;
+        video.pause();
+        currentLoop = 0;
+        updateInfo();
+        setTimeout(() => {
+            video.currentTime = startTime;
+            isPaused = false;
+            video.play();
+        }, (endTime - startTime) * 1000);
+    }
+
     video.addEventListener('timeupdate', loopVideo);
 
-    // Hàm để điều chỉnh thời gian bắt đầu và kết thúc
     function adjustTime(type, delta) {
         if (type === "start") {
             startTime = Math.max(0, startTime + delta);
+            updateInfo();
+            video.currentTime = startTime;
+            video.play();
+            if (looping) {
+                restartLoop();
+            }
         } else if (type === "end") {
             endTime = Math.max(startTime + 0.1, endTime + delta);
+            updateInfo();
         }
-        console.log(`Thời gian bắt đầu: ${startTime.toFixed(2)}s, Thời gian kết thúc: ${endTime.toFixed(2)}s`);
-        // Phát lại video từ thời gian bắt đầu mới
-        video.currentTime = startTime;
-        video.play();
     }
 
-    // Hàm để điều chỉnh tốc độ phát video
     function adjustPlaybackRate(delta) {
         video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
-        console.log(`Tốc độ phát: ${video.playbackRate.toFixed(2)}`);
+        updateInfo();  // Cập nhật thông tin
     }
 
-    // Lắng nghe sự kiện nhấn phím để điều khiển phát lại video và lặp lại
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
                 startTime = video.currentTime;
-                console.log(`Thời gian bắt đầu đặt thành: ${startTime.toFixed(2)}s`);
+                updateInfo();
                 break;
             case 'n':
                 endTime = Math.max(startTime + 0.1, video.currentTime);
                 looping = true;
                 currentLoop = 0;
-                console.log(`Thời gian kết thúc đặt thành: ${endTime.toFixed(2)}s`);
+                updateInfo();
+                restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
                 break;
             case 'h':
                 looping = false;
-                console.log("Hủy lặp lại.");
+                updateInfo();
                 break;
             case 'a':
                 adjustTime("start", -1);
@@ -78,7 +122,7 @@ javascript:(function(){
                 adjustTime("end", -1);
                 break;
             case 'f':
-                adjustTime("end", 1); // Chỉ điều chỉnh thời gian kết thúc thêm 1 giây
+                adjustTime("end", 1);
                 break;
             case 'z':
                 adjustTime("start", -0.1);
@@ -94,11 +138,11 @@ javascript:(function(){
                 break;
             case 'j':
                 loopCount = Math.max(1, loopCount - 1);
-                console.log(`Số lần lặp lại: ${loopCount}`);
+                updateInfo();
                 break;
             case 'k':
                 loopCount++;
-                console.log(`Số lần lặp lại: ${loopCount}`);
+                updateInfo();
                 break;
             case '1':
                 adjustPlaybackRate(-1);
@@ -123,4 +167,9 @@ javascript:(function(){
         }
     });
 
+    // Cập nhật thông tin ban đầu
+    updateInfo();
+
+    // Xóa bảng điều khiển
+    console.clear();
 })();
