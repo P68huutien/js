@@ -1,5 +1,5 @@
 javascript:(function(){
-    // Khởi tạo các biến cho thời gian bắt đầu và kết thúc, số lần lặp, và trạng thái lặp
+    // Khởi tạo các biến cho thời gian bắt đầu và kết thúc, số lần lặp, và trạng thái lặp 
     let startTime = 0;
     let endTime = 0;
     let looping = false;
