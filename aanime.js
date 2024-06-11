@@ -7,42 +7,80 @@ javascript:(function(){
     let isPaused = false;
     let isHidden = false;
     let fontSize = 14;
+    let currentTab = 'info'; // Default tab
 
     const video = document.querySelector('video');
 
-    // Tạo phần tử HTML để hiển thị thông số
-    const infoDiv = document.createElement('div');
-    infoDiv.style.position = 'fixed';
-    infoDiv.style.top = '10px';
-    infoDiv.style.left = '10px';
-    infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    infoDiv.style.color = 'white';
-    infoDiv.style.padding = '10px';
-    infoDiv.style.borderRadius = '5px';
-    infoDiv.style.zIndex = '1000';
-    infoDiv.style.resize = 'both';
-    infoDiv.style.overflow = 'auto';
-    infoDiv.style.fontSize = `${fontSize}px`;
-    infoDiv.style.cursor = 'move';
-    document.body.appendChild(infoDiv);
+    // Create HTML elements for the control panel and tabs
+    const controlPanel = document.createElement('div');
+    controlPanel.style.position = 'fixed';
+    controlPanel.style.top = '10px';
+    controlPanel.style.left = '10px';
+    controlPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    controlPanel.style.color = 'white';
+    controlPanel.style.padding = '10px';
+    controlPanel.style.borderRadius = '5px';
+    controlPanel.style.zIndex = '1000';
+    controlPanel.style.resize = 'both';
+    controlPanel.style.overflow = 'auto';
+    controlPanel.style.fontSize = `${fontSize}px`;
+    controlPanel.style.cursor = 'move';
+    document.body.appendChild(controlPanel);
+
+    const tabContainer = document.createElement('div');
+    tabContainer.style.display = 'flex';
+    tabContainer.style.justifyContent = 'space-around';
+    tabContainer.style.marginBottom = '10px';
+
+    const infoTab = document.createElement('div');
+    infoTab.innerText = 'Thông tin';
+    infoTab.style.cursor = 'pointer';
+    infoTab.style.padding = '5px 10px';
+    infoTab.style.backgroundColor = 'gray';
+    infoTab.style.borderRadius = '3px';
+    infoTab.addEventListener('click', () => switchTab('info'));
+
+    const kaiwaTab = document.createElement('div');
+    kaiwaTab.innerText = 'Kaiwa Shadowing';
+    kaiwaTab.style.cursor = 'pointer';
+    kaiwaTab.style.padding = '5px 10px';
+    kaiwaTab.style.backgroundColor = 'gray';
+    kaiwaTab.style.borderRadius = '3px';
+    kaiwaTab.addEventListener('click', () => switchTab('kaiwa'));
+
+    const practiceTab = document.createElement('div');
+    practiceTab.innerText = 'Listening Practice';
+    practiceTab.style.cursor = 'pointer';
+    practiceTab.style.padding = '5px 10px';
+    practiceTab.style.backgroundColor = 'gray';
+    practiceTab.style.borderRadius = '3px';
+    practiceTab.addEventListener('click', () => switchTab('practice'));
+
+    tabContainer.appendChild(infoTab);
+    tabContainer.appendChild(kaiwaTab);
+    tabContainer.appendChild(practiceTab);
+    controlPanel.appendChild(tabContainer);
+
+    const contentDiv = document.createElement('div');
+    controlPanel.appendChild(contentDiv);
 
     let isDragging = false;
     let dragStartX, dragStartY, initialLeft, initialTop;
 
-    infoDiv.addEventListener('mousedown', function(e) {
+    controlPanel.addEventListener('mousedown', function(e) {
         isDragging = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
-        initialLeft = parseInt(infoDiv.style.left, 10);
-        initialTop = parseInt(infoDiv.style.top, 10);
+        initialLeft = parseInt(controlPanel.style.left, 10);
+        initialTop = parseInt(controlPanel.style.top, 10);
     });
 
     document.addEventListener('mousemove', function(e) {
         if (isDragging) {
             let deltaX = e.clientX - dragStartX;
             let deltaY = e.clientY - dragStartY;
-            infoDiv.style.left = `${initialLeft + deltaX}px`;
-            infoDiv.style.top = `${initialTop + deltaY}px`;
+            controlPanel.style.left = `${initialLeft + deltaX}px`;
+            controlPanel.style.top = `${initialTop + deltaY}px`;
         }
     });
 
@@ -51,17 +89,15 @@ javascript:(function(){
     });
 
     function updateInfo() {
-        infoDiv.innerHTML = `
-            <p>Phần mềm luyện nghe + Kaiwa Shadowing</p>
-            <p>DÙng cho web aanime.biz, TikTok, Youtube...</p>
+        if (currentTab !== 'info') return;
+        contentDiv.innerHTML = `
             <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
             <p>Phím hướng dẫn:</p>
-            <p>1, 2, 3: Giảm tốc độ -1,-2,-3%,</p>
-            <p>4, 5, 6: Tăng tốc độ +1,+2,+3%,</p>
+            <p>1, 2, 3, 4, 5, 6: Điều chỉnh tốc độ phát</p>
             <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
             <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
             <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
@@ -73,8 +109,22 @@ javascript:(function(){
             <p>m: Ẩn/hiện bảng điều khiển</p>
             <p>+, -: Tăng/giảm kích thước font chữ</p>
             <p>t, g: Tăng/giảm âm lượng</p>
-            <p>Nhấn F12 để tăng kích thước video.</p>
+            <p>Nhấn F12 để đóng bảng điều khiển.</p>
         `;
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        infoTab.style.backgroundColor = (tab === 'info') ? 'lightgray' : 'gray';
+        kaiwaTab.style.backgroundColor = (tab === 'kaiwa') ? 'lightgray' : 'gray';
+        practiceTab.style.backgroundColor = (tab === 'practice') ? 'lightgray' : 'gray';
+        if (tab === 'info') {
+            updateInfo();
+        } else if (tab === 'kaiwa') {
+            contentDiv.innerHTML = `<p>Kaiwa Shadowing content goes here.</p>`;
+        } else if (tab === 'practice') {
+            contentDiv.innerHTML = `<p>Listening Practice content goes here.</p>`;
+        }
     }
 
     function loopVideo() {
@@ -82,7 +132,7 @@ javascript:(function(){
             isPaused = true;
             video.pause();
             currentLoop++;
-            updateInfo();  // Cập nhật thông tin
+            updateInfo();
             const segmentDuration = endTime - startTime;
             const pauseDuration = segmentDuration * 2 + 1;
             if (currentLoop < loopCount) {
@@ -129,7 +179,7 @@ javascript:(function(){
 
     function adjustPlaybackRate(delta) {
         video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
-        updateInfo();  // Cập nhật thông tin
+        updateInfo();
     }
 
     function adjustVolume(delta) {
@@ -139,12 +189,12 @@ javascript:(function(){
 
     function toggleInfoDiv() {
         isHidden = !isHidden;
-        infoDiv.style.display = isHidden ? 'none' : 'block';
+        controlPanel.style.display = isHidden ? 'none' : 'block';
     }
 
     function adjustFontSize(delta) {
         fontSize = Math.max(10, fontSize + delta);
-        infoDiv.style.fontSize = `${fontSize}px`;
+        controlPanel.style.fontSize = `${fontSize}px`;
     }
 
     document.addEventListener('keydown', (event) => {
@@ -158,7 +208,7 @@ javascript:(function(){
                 looping = true;
                 currentLoop = 0;
                 updateInfo();
-                restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
+                restartLoop();
                 break;
             case 'h':
                 looping = false;
@@ -234,9 +284,9 @@ javascript:(function(){
         }
     });
 
-    // Cập nhật thông tin ban đầu
-    updateInfo();
+    // Initial update
+    switchTab('info');
 
-    // Xóa bảng điều khiển
+    // Clear console
     console.clear();
 })();
