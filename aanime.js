@@ -33,7 +33,7 @@ javascript:(function(){
     tabContainer.style.marginBottom = '10px';
 
     const infoTab = document.createElement('div');
-    infoTab.innerText = 'Thông tin';
+    infoTab.innerText = 'Hữu Tiền';
     infoTab.style.cursor = 'pointer';
     infoTab.style.padding = '5px 10px';
     infoTab.style.backgroundColor = 'gray';
@@ -49,7 +49,7 @@ javascript:(function(){
     kaiwaTab.addEventListener('click', () => switchTab('kaiwa'));
 
     const practiceTab = document.createElement('div');
-    practiceTab.innerText = 'Listening Practice';
+    practiceTab.innerText = 'aanime.biz, Tiktok, Youtube...';
     practiceTab.style.cursor = 'pointer';
     practiceTab.style.padding = '5px 10px';
     practiceTab.style.backgroundColor = 'gray';
