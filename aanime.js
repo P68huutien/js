@@ -33,12 +33,12 @@ javascript:(function(){
     tabContainer.style.marginBottom = '10px';
 
     const infoTab = document.createElement('div');
-    infoTab.innerText = 'Hữu Tiền';
+    infoTab.innerText = 'Kaiwa Shadowing';
     infoTab.style.cursor = 'pointer';
     infoTab.style.padding = '5px 10px';
     infoTab.style.backgroundColor = 'gray';
     infoTab.style.borderRadius = '3px';
-    infoTab.addEventListener('click', () => switchTab('Kaiwa Shadowing'));
+    infoTab.addEventListener('click', () => switchTab('info'));
 
     const kaiwaTab = document.createElement('div');
     kaiwaTab.innerText = 'aanime.biz';
@@ -49,7 +49,7 @@ javascript:(function(){
     kaiwaTab.addEventListener('click', () => switchTab('kaiwa'));
 
     const practiceTab = document.createElement('div');
-    practiceTab.innerText = 'Tiktok, Youtube...';
+    practiceTab.innerText = 'Tiktok, Youtube,...';
     practiceTab.style.cursor = 'pointer';
     practiceTab.style.padding = '5px 10px';
     practiceTab.style.backgroundColor = 'gray';
@@ -97,7 +97,7 @@ javascript:(function(){
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
             <p>Phím hướng dẫn:</p>
-            <p>1, 2, 3, 4, 5, 6: Điều chỉnh tốc độ phát</p>
+            <p>1, 2, 3, 4, 5, 6: Chỉnh tốc độ -1,-2,-3,+1,+2,+3%</p>
             <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
             <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
             <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
@@ -115,8 +115,8 @@ javascript:(function(){
 
     function switchTab(tab) {
         currentTab = tab;
-        infoTab.style.backgroundColor = (tab === 'info') ? 'lightgray' : 'gray';
-        kaiwaTab.style.backgroundColor = (tab === 'kaiwa') ? 'lightgray' : 'gray';
+        infoTab.style.backgroundColor = (tab === 'kaiwa') ? 'lightgray' : 'gray';
+        kaiwaTab.style.backgroundColor = (tab === 'info') ? 'lightgray' : 'gray';
         practiceTab.style.backgroundColor = (tab === 'practice') ? 'lightgray' : 'gray';
         if (tab === 'info') {
             updateInfo();
