@@ -5,6 +5,8 @@ javascript:(function(){
     let loopCount = 30;
     let currentLoop = 0;
     let isPaused = false;
+    let isHidden = false;
+    let fontSize = 14;
 
     const video = document.querySelector('video');
 
@@ -18,7 +20,35 @@ javascript:(function(){
     infoDiv.style.padding = '10px';
     infoDiv.style.borderRadius = '5px';
     infoDiv.style.zIndex = '1000';
+    infoDiv.style.resize = 'both';
+    infoDiv.style.overflow = 'auto';
+    infoDiv.style.fontSize = `${fontSize}px`;
+    infoDiv.style.cursor = 'move';
     document.body.appendChild(infoDiv);
+
+    let isDragging = false;
+    let dragStartX, dragStartY, initialLeft, initialTop;
+
+    infoDiv.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        initialLeft = parseInt(infoDiv.style.left, 10);
+        initialTop = parseInt(infoDiv.style.top, 10);
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            let deltaX = e.clientX - dragStartX;
+            let deltaY = e.clientY - dragStartY;
+            infoDiv.style.left = `${initialLeft + deltaX}px`;
+            infoDiv.style.top = `${initialTop + deltaY}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
 
     function updateInfo() {
         infoDiv.innerHTML = `
@@ -26,8 +56,10 @@ javascript:(function(){
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
+            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
             <p>Phím hướng dẫn:</p>
-            <p>1, 2, 3, 4, 5, 6: Điều chỉnh tốc độ phát</p>
+            <p>1, 2, 3: Giảm tốc độ -1,-2,-3%,</p>
+            <p>4, 5, 6: Tăng tốc độ +1,+2,+3%,</p>
             <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
             <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
             <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
@@ -36,7 +68,10 @@ javascript:(function(){
             <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
             <p>h: Hủy quá trình lặp lại</p>
             <p>j, k: Tăng/giảm số lần lặp lại</p>
-            <p>Nhấn F12 để đóng bảng điều khiển.</p>
+            <p>m: Ẩn/hiện bảng điều khiển</p>
+            <p>+, -: Tăng/giảm kích thước font chữ</p>
+            <p>t, g: Tăng/giảm âm lượng</p>
+            <p>Nhấn F12 để tăng kích thước video.</p>
         `;
     }
 
@@ -93,6 +128,21 @@ javascript:(function(){
     function adjustPlaybackRate(delta) {
         video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
         updateInfo();  // Cập nhật thông tin
+    }
+
+    function adjustVolume(delta) {
+        video.volume = Math.min(1, Math.max(0, video.volume + delta));
+        updateInfo();
+    }
+
+    function toggleInfoDiv() {
+        isHidden = !isHidden;
+        infoDiv.style.display = isHidden ? 'none' : 'block';
+    }
+
+    function adjustFontSize(delta) {
+        fontSize = Math.max(10, fontSize + delta);
+        infoDiv.style.fontSize = `${fontSize}px`;
     }
 
     document.addEventListener('keydown', (event) => {
@@ -161,6 +211,21 @@ javascript:(function(){
                 break;
             case '6':
                 adjustPlaybackRate(5);
+                break;
+            case 'm':
+                toggleInfoDiv();
+                break;
+            case '+':
+                adjustFontSize(1);
+                break;
+            case '-':
+                adjustFontSize(-1);
+                break;
+            case 't':
+                adjustVolume(0.1);
+                break;
+            case 'g':
+                adjustVolume(-0.1);
                 break;
             default:
                 break;
