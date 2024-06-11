@@ -38,10 +38,10 @@ javascript:(function(){
     infoTab.style.padding = '5px 10px';
     infoTab.style.backgroundColor = 'gray';
     infoTab.style.borderRadius = '3px';
-    infoTab.addEventListener('click', () => switchTab('info'));
+    infoTab.addEventListener('click', () => switchTab('Kaiwa Shadowing'));
 
     const kaiwaTab = document.createElement('div');
-    kaiwaTab.innerText = 'Kaiwa Shadowing';
+    kaiwaTab.innerText = 'aanime.biz';
     kaiwaTab.style.cursor = 'pointer';
     kaiwaTab.style.padding = '5px 10px';
     kaiwaTab.style.backgroundColor = 'gray';
@@ -49,7 +49,7 @@ javascript:(function(){
     kaiwaTab.addEventListener('click', () => switchTab('kaiwa'));
 
     const practiceTab = document.createElement('div');
-    practiceTab.innerText = 'aanime.biz, Tiktok, Youtube...';
+    practiceTab.innerText = 'Tiktok, Youtube...';
     practiceTab.style.cursor = 'pointer';
     practiceTab.style.padding = '5px 10px';
     practiceTab.style.backgroundColor = 'gray';
