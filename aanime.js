@@ -52,6 +52,8 @@ javascript:(function(){
 
     function updateInfo() {
         infoDiv.innerHTML = `
+            <p>Phần mềm luyện nghe + Kaiwa Shadowing</p>
+            <p>DÙng cho web aanime.biz, TikTok, Youtube...</p>
             <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
