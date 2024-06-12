@@ -7,6 +7,8 @@ javascript:(function(){
     let isPaused = false;
     let isHidden = false;
     let fontSize = 14;
+    let countdownTime = 0;
+    let countdownInterval;
 
     const video = document.querySelector('video');
 
@@ -52,14 +54,17 @@ javascript:(function(){
 
     function updateInfo() {
         infoDiv.innerHTML = `
-            <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>App Shadowing</p>
+            <p>Dùng cho web aanime.biz, Tiktok, Youtube,...</p>
+			<p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
+            <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
             <p>Phím hướng dẫn:</p>
-            <p>1, 2, 3: Giảm tốc độ -1,-2,-3%,</p>
-            <p>4, 5, 6: Tăng tốc độ +1,+2,+3%,</p>
+            <p>1, 2, 3: Giảm tốc độ -1,-2,-3%</p>
+            <p>4, 5, 6: Tăng tốc độ +1,+2,+3%</p>
             <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
             <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
             <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
@@ -67,11 +72,12 @@ javascript:(function(){
             <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
             <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
             <p>h: Hủy quá trình lặp lại</p>
-            <p>j, k: Tăng/giảm số lần lặp lại</p>
+            <p>j, k: Tăng/giảm số lần lặp lại, mặc định 30</p>
             <p>m: Ẩn/hiện bảng điều khiển</p>
             <p>+, -: Tăng/giảm kích thước font chữ</p>
             <p>t, g: Tăng/giảm âm lượng</p>
             <p>Nhấn F12 để tăng kích thước video.</p>
+            
         `;
     }
 
@@ -83,6 +89,8 @@ javascript:(function(){
             updateInfo();  // Cập nhật thông tin
             const segmentDuration = endTime - startTime;
             const pauseDuration = segmentDuration * 2 + 1;
+            countdownTime = pauseDuration;
+            startCountdown();
             if (currentLoop < loopCount) {
                 setTimeout(() => {
                     video.currentTime = startTime;
@@ -92,8 +100,20 @@ javascript:(function(){
             } else {
                 looping = false;
                 console.log("Hoàn thành lặp lại.");
+                clearInterval(countdownInterval);
             }
         }
+    }
+
+    function startCountdown() {
+        clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+            countdownTime -= 0.1;
+            if (countdownTime <= 0) {
+                clearInterval(countdownInterval);
+            }
+            updateInfo();
+        }, 100);
     }
 
     function restartLoop() {
@@ -161,6 +181,7 @@ javascript:(function(){
             case 'h':
                 looping = false;
                 updateInfo();
+                clearInterval(countdownInterval);
                 break;
             case 'a':
                 adjustTime("start", -1);
@@ -222,10 +243,10 @@ javascript:(function(){
                 adjustFontSize(-1);
                 break;
             case 't':
-                adjustVolume(0.1);
+                adjustVolume(0.01);
                 break;
             case 'g':
-                adjustVolume(-0.1);
+                adjustVolume(-0.01);
                 break;
             default:
                 break;
