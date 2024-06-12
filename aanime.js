@@ -54,7 +54,7 @@ javascript:(function(){
 
     function updateInfo() {
         infoDiv.innerHTML = `
-            <p>App Shadowing</p>
+            <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>Dùng cho web aanime.biz, tsunagarujp,</p>
 			<p>cả Tiktok, lẫn Youtube,...</p>
 			<p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
