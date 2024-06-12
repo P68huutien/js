@@ -56,7 +56,7 @@ javascript:(function(){
         infoDiv.innerHTML = `
             <p>App Shadowing</p>
             <p>Dùng cho web aanime.biz, Tiktok, Youtube,...</p>
-			<p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+	    <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
