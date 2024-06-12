@@ -55,8 +55,9 @@ javascript:(function(){
     function updateInfo() {
         infoDiv.innerHTML = `
             <p>App Shadowing</p>
-            <p>Dùng cho web aanime.biz, Tiktok, Youtube,...</p>
-	    <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>Dùng cho web aanime.biz, tsunagarujp,</p>
+			<p>cả Tiktok, lẫn Youtube,...</p>
+			<p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
@@ -77,7 +78,7 @@ javascript:(function(){
             <p>+, -: Tăng/giảm kích thước font chữ</p>
             <p>t, g: Tăng/giảm âm lượng</p>
             <p>Nhấn F12 để tăng kích thước video.</p>
-            
+            <p> </p>
         `;
     }
 
