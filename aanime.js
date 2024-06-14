@@ -2,17 +2,20 @@ javascript:(function(){
     let startTime = 0;
     let endTime = 0;
     let looping = false;
-    let loopCount = 30;
+    let loopCount = 50;
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
     let fontSize = 14;
     let countdownTime = 0;
     let countdownInterval;
+    let hKeyPressCount = 0; // Counter for "h" key presses
 
     const video = document.querySelector('video');
+    video.volume = 0.5; // Set initial volume to 50%
+    video.playbackRate = 0.8; // Set initial playback speed to 80%
 
-    // Tạo phần tử HTML để hiển thị thông số
+    // Create HTML element to display info
     const infoDiv = document.createElement('div');
     infoDiv.style.position = 'fixed';
     infoDiv.style.top = '10px';
@@ -27,6 +30,20 @@ javascript:(function(){
     infoDiv.style.fontSize = `${fontSize}px`;
     infoDiv.style.cursor = 'move';
     document.body.appendChild(infoDiv);
+
+    // Create a container for the buttons
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.position = 'fixed';
+    buttonContainer.style.top = '200px';
+    buttonContainer.style.left = '10px';
+    buttonContainer.style.zIndex = '1000';
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.flexWrap = 'wrap';
+    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    buttonContainer.style.padding = '10px';
+    buttonContainer.style.borderRadius = '5px';
+    buttonContainer.style.gap = '5px';
+    document.body.appendChild(buttonContainer);
 
     let isDragging = false;
     let dragStartX, dragStartY, initialLeft, initialTop;
@@ -56,8 +73,8 @@ javascript:(function(){
         infoDiv.innerHTML = `
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>Dùng cho web aanime.biz, tsunagarujp,</p>
-			<p>cả Tiktok, lẫn Youtube,...</p>
-			<p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>cả Tiktok, lẫn Youtube,...</p>
+            <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
@@ -72,8 +89,8 @@ javascript:(function(){
             <p>c, v: Điều chỉnh điểm kết thúc (-0.1s, +0.1s)</p>
             <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
             <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
-            <p>h: Hủy quá trình lặp lại</p>
-            <p>j, k: Tăng/giảm số lần lặp lại, mặc định 30</p>
+            <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
+            <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
             <p>m: Ẩn/hiện bảng điều khiển</p>
             <p>+, -: Tăng/giảm kích thước font chữ</p>
             <p>t, g: Tăng/giảm âm lượng</p>
@@ -166,6 +183,51 @@ javascript:(function(){
         infoDiv.style.fontSize = `${fontSize}px`;
     }
 
+    function createButton(label, onClick) {
+        const button = document.createElement('button');
+        button.innerText = label;
+        button.style.margin = '5px';
+        button.style.padding = '10px';
+        button.style.fontSize = '14px';
+        button.style.cursor = 'pointer';
+        button.style.backgroundColor = 'white';
+        button.style.color = 'black';
+        button.style.border = '1px solid black';
+        button.style.borderRadius = '5px';
+        button.addEventListener('click', onClick);
+        buttonContainer.appendChild(button);
+    }
+
+    createButton('h', () => {
+        hKeyPressCount++;
+        looping = hKeyPressCount % 2 === 0;
+        updateInfo();
+        if (!looping) {
+            clearInterval(countdownInterval);
+        } else {
+            restartLoop();
+        }
+    });
+    createButton('b', () => {
+        startTime = video.currentTime - 0.15;
+        updateInfo();
+    });
+    createButton('n', () => {
+        endTime = Math.max(startTime + 0.1, video.currentTime);
+        looping = true;
+        currentLoop = 0;
+        updateInfo();
+        restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
+    });
+    createButton('a', () => adjustTime("start", -1));
+    createButton('s', () => adjustTime("start", 1));
+    createButton('d', () => adjustTime("end", -1));
+    createButton('f', () => adjustTime("end", 1));
+    createButton('z', () => adjustTime("start", -0.1));
+    createButton('x', () => adjustTime("start", 0.1));
+    createButton('c', () => adjustTime("end", -0.1));
+    createButton('v', () => adjustTime("end", 0.1));
+
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
@@ -180,9 +242,14 @@ javascript:(function(){
                 restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
                 break;
             case 'h':
-                looping = false;
+                hKeyPressCount++;
+                looping = hKeyPressCount % 2 === 0;
                 updateInfo();
-                clearInterval(countdownInterval);
+                if (!looping) {
+                    clearInterval(countdownInterval);
+                } else {
+                    restartLoop();
+                }
                 break;
             case 'a':
                 adjustTime("start", -1);
@@ -254,9 +321,9 @@ javascript:(function(){
         }
     });
 
-    // Cập nhật thông tin ban đầu
+    // Update initial info
     updateInfo();
 
-    // Xóa bảng điều khiển
+    // Clear console
     console.clear();
 })();
