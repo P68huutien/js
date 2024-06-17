@@ -69,6 +69,28 @@ javascript:(function(){
         isDragging = false;
     });
 
+    // Create a container for the key help info
+    const keyHelpDiv = document.createElement('div');
+    keyHelpDiv.innerHTML = `
+        <p>Phím hướng dẫn:</p>
+        <p>1, 2, 3: Giảm tốc độ -1,-2,-3%</p>
+        <p>4, 5, 6: Tăng tốc độ +1,+2,+3%</p>
+        <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
+        <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
+        <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
+        <p>c, v: Điều chỉnh điểm kết thúc (-0.1s, +0.1s)</p>
+        <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
+        <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
+        <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
+        <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
+        <p>m: Ẩn/hiện bảng điều khiển</p>
+        <p>+, -: Tăng/giảm kích thước font chữ</p>
+        <p>t, g: Tăng/giảm âm lượng</p>
+        <p>Nhấn F12 để tăng kích thước video.</p>
+        <p> </p>
+    `;
+    infoDiv.appendChild(keyHelpDiv);
+
     function updateInfo() {
         infoDiv.innerHTML = `
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
@@ -80,23 +102,8 @@ javascript:(function(){
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
-            <p>Phím hướng dẫn:</p>
-            <p>1, 2, 3: Giảm tốc độ -1,-2,-3%</p>
-            <p>4, 5, 6: Tăng tốc độ +1,+2,+3%</p>
-            <p>a, s: Điều chỉnh điểm bắt đầu (-1s, +1s)</p>
-            <p>d, f: Điều chỉnh điểm kết thúc (-1s, +1s)</p>
-            <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
-            <p>c, v: Điều chỉnh điểm kết thúc (-0.1s, +0.1s)</p>
-            <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
-            <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
-            <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
-            <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
-            <p>m: Ẩn/hiện bảng điều khiển</p>
-            <p>+, -: Tăng/giảm kích thước font chữ</p>
-            <p>t, g: Tăng/giảm âm lượng</p>
-            <p>Nhấn F12 để tăng kích thước video.</p>
-            <p> </p>
         `;
+        infoDiv.appendChild(keyHelpDiv);  // Append keyHelpDiv to infoDiv
     }
 
     function loopVideo() {
@@ -175,7 +182,7 @@ javascript:(function(){
 
     function toggleInfoDiv() {
         isHidden = !isHidden;
-        infoDiv.style.display = isHidden ? 'none' : 'block';
+        keyHelpDiv.style.display = isHidden ? 'none' : 'block';
     }
 
     function adjustFontSize(delta) {
@@ -227,6 +234,13 @@ javascript:(function(){
     createButton('x', () => adjustTime("start", 0.1));
     createButton('c', () => adjustTime("end", -0.1));
     createButton('v', () => adjustTime("end", 0.1));
+    createButton('1', () => adjustPlaybackRate(-1));
+    createButton('2', () => adjustPlaybackRate(-2));
+    createButton('3', () => adjustPlaybackRate(-3));
+    createButton('4', () => adjustPlaybackRate(1));
+    createButton('5', () => adjustPlaybackRate(2));
+    createButton('6', () => adjustPlaybackRate(3));
+    createButton('m', () => toggleInfoDiv());
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
@@ -275,31 +289,23 @@ javascript:(function(){
             case 'v':
                 adjustTime("end", 0.1);
                 break;
-            case 'j':
-                loopCount = Math.max(1, loopCount - 1);
-                updateInfo();
-                break;
-            case 'k':
-                loopCount++;
-                updateInfo();
-                break;
             case '1':
                 adjustPlaybackRate(-1);
                 break;
             case '2':
-                adjustPlaybackRate(-3);
+                adjustPlaybackRate(-2);
                 break;
             case '3':
-                adjustPlaybackRate(-5);
+                adjustPlaybackRate(-3);
                 break;
             case '4':
                 adjustPlaybackRate(1);
                 break;
             case '5':
-                adjustPlaybackRate(3);
+                adjustPlaybackRate(2);
                 break;
             case '6':
-                adjustPlaybackRate(5);
+                adjustPlaybackRate(3);
                 break;
             case 'm':
                 toggleInfoDiv();
