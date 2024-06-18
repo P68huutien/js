@@ -19,8 +19,8 @@ javascript:(function(){
     // Create HTML element to display info
     const infoDiv = document.createElement('div');
     infoDiv.style.position = 'fixed';
-    infoDiv.style.top = '10px';
-    infoDiv.style.left = '10px';
+    infoDiv.style.top = '100px';
+    infoDiv.style.left = '20px';
     infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     infoDiv.style.color = 'white';
     infoDiv.style.padding = '10px';
@@ -35,8 +35,8 @@ javascript:(function(){
     // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '550px';
-    buttonContainer.style.left = '10px';
+    buttonContainer.style.top = '100px';
+    buttonContainer.style.right = '20px';
     buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'grid';
     buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
