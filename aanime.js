@@ -6,7 +6,7 @@ javascript:(function(){
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
-    let fontSize = 14;
+    let fontSize = 28; // Double the font size
     let countdownTime = 0;
     let countdownInterval;
     let hKeyPressCount = 0; // Counter for "h" key presses
@@ -27,7 +27,7 @@ javascript:(function(){
     infoDiv.style.zIndex = '1000';
     infoDiv.style.resize = 'both';
     infoDiv.style.overflow = 'auto';
-    infoDiv.style.fontSize = `${fontSize}px`;
+    infoDiv.style.fontSize = `${fontSize}px`; // Set font size
     infoDiv.style.cursor = 'move';
     document.body.appendChild(infoDiv);
 
@@ -39,6 +39,7 @@ javascript:(function(){
     buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'grid';
     buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
+    buttonContainer.style.gridAutoRows = 'auto';
     buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
@@ -96,12 +97,12 @@ javascript:(function(){
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>Dùng cho web aanime.biz, tsunagarujp,</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
-            <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>Tốc độ: ${video.playbackRate.toFixed(2)}  Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
-            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>            
+            <p> </p>            
         `;
         infoDiv.appendChild(keyHelpDiv);  // Append keyHelpDiv to infoDiv
     }
@@ -195,7 +196,7 @@ javascript:(function(){
         button.innerText = label;
         button.style.margin = '5px';
         button.style.padding = '10px';
-        button.style.fontSize = '28px'; // Double the font size
+        button.style.fontSize = `${fontSize}px`; // Set font size
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'white';
         button.style.color = 'black';
@@ -206,96 +207,91 @@ javascript:(function(){
     }
 
     // Create buttons in the desired order
-    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', '4', '5', '6'].forEach(key => {
-        createButton(key, () => {
-            const event = new KeyboardEvent('keydown', { key });
-            document.dispatchEvent(event);
-        });
-    });
-
-    document.addEventListener('keydown', (event) => {
-        switch (event.key) {
-            case 'b':
-                startTime = video.currentTime - 0.15;
-                updateInfo();
-                break;
-            case 'n':
-                endTime = Math.max(startTime + 0.1, video.currentTime);
-                looping = true;
-                currentLoop = 0;
-                updateInfo();
-                restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
-                break;
-            case 'h':
-                hKeyPressCount++;
-                looping = hKeyPressCount % 2 === 0;
-                updateInfo();
-                if (!looping) {
-                    clearInterval(countdownInterval);
-                } else {
+    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', '4', '5', '6'].forEach(label => {
+        createButton(label, () => {
+            switch (label) {
+                case 'b':
+                    startTime = video.currentTime - 0.15;
+                    updateInfo();
+                    break;
+                case 'n':
+                    endTime = Math.max(startTime + 0.1, video.currentTime);
+                    looping = true;
+                    currentLoop = 0;
+                    updateInfo();
                     restartLoop();
-                }
-                break;
-            case 'a':
-                adjustTime("start", -1);
-                break;
-            case 's':
-                adjustTime("start", 1);
-                break;
-            case 'd':
-                adjustTime("end", -1);
-                break;
-            case 'f':
-                adjustTime("end", 1);
-                break;
-            case 'z':
-                adjustTime("start", -0.1);
-                break;
-            case 'x':
-                adjustTime("start", 0.1);
-                break;
-            case 'c':
-                adjustTime("end", -0.1);
-                break;
-            case 'v':
-                adjustTime("end", 0.1);
-                break;
-            case '1':
-                adjustPlaybackRate(-1);
-                break;
-            case '2':
-                adjustPlaybackRate(-2);
-                break;
-            case '3':
-                adjustPlaybackRate(-3);
-                break;
-            case '4':
-                adjustPlaybackRate(1);
-                break;
-            case '5':
-                adjustPlaybackRate(2);
-                break;
-            case '6':
-                adjustPlaybackRate(3);
-                break;
-            case 'm':
-                toggleInfoDiv();
-                break;
-            case '+':
-                adjustFontSize(1);
-                break;
-            case '-':
-                adjustFontSize(-1);
-                break;
-            case 't':
-                adjustVolume(0.01);
-                break;
-            case 'g':
-                adjustVolume(-0.01);
-                break;
-            default:
-                break;
-        }
+                    break;
+                case 'h':
+                    hKeyPressCount++;
+                    looping = hKeyPressCount % 2 === 0;
+                    updateInfo();
+                    if (!looping) {
+                        clearInterval(countdownInterval);
+                    } else {
+                        restartLoop();
+                    }
+                    break;
+                case 'a':
+                    adjustTime("start", -1);
+                    break;
+                case 's':
+                    adjustTime("start", 1);
+                    break;
+                case 'd':
+                    adjustTime("end", -1);
+                    break;
+                case 'f':
+                    adjustTime("end", 1);
+                    break;
+                case 'z':
+                    adjustTime("start", -0.1);
+                    break;
+                case 'x':
+                    adjustTime("start", 0.1);
+                    break;
+                case 'c':
+                    adjustTime("end", -0.1);
+                    break;
+                case 'v':
+                    adjustTime("end", 0.1);
+                    break;
+                case '1':
+                    adjustPlaybackRate(-1);
+                    break;
+                case '2':
+                    adjustPlaybackRate(-2);
+                    break;
+                case '3':
+                    adjustPlaybackRate(-3);
+                    break;
+                case '4':
+                    adjustPlaybackRate(1);
+                    break;
+                case '5':
+                    adjustPlaybackRate(2);
+                    break;
+                case '6':
+                    adjustPlaybackRate(3);
+                    break;
+                case 'm':
+                    toggleInfoDiv();
+                    break;
+                case '+':
+                    adjustFontSize(2); // Increase font size by 2
+                    break;
+                case '-':
+                    adjustFontSize(-2); // Decrease font size by 2
+                    break;
+                case 't':
+                    adjustVolume(0.01);
+                    break;
+                case 'g':
+                    adjustVolume(-0.01);
+                    break;
+                default:
+                    break;
+            }
+        });
     });
 
     // Update initial info
