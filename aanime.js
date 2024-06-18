@@ -35,7 +35,7 @@ javascript:(function(){
     // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '100px';
+    buttonContainer.style.top = '1000px';
     buttonContainer.style.right = '20px';
     buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'grid';
