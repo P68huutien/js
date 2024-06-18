@@ -35,8 +35,8 @@ javascript:(function(){
     // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '10px';
-    buttonContainer.style.right = '10px';
+    buttonContainer.style.top = '300px';
+    buttonContainer.style.left = '10px';
     buttonContainer.style.zIndex = '999'; // Lower zIndex to not cover infoDiv
     buttonContainer.style.display = 'grid';
     buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
