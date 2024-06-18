@@ -35,12 +35,12 @@ javascript:(function(){
     // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '600px';
+    buttonContainer.style.top = '500px';
     buttonContainer.style.left = '10px';
-    buttonContainer.style.zIndex = '999'; // Lower zIndex to not cover infoDiv
+    buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'grid';
     buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
-    buttonContainer.style.gridTemplateRows = 'repeat(5, auto)';
+    buttonContainer.style.gridAutoRows = 'auto';
     buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
@@ -84,9 +84,12 @@ javascript:(function(){
         <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
         <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
+        <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
-        <p>k: Lưu công việc hiện tại và đưa về 0</p>
-        <p>j: Mở danh sách công việc đã lưu</p>
+        <p>+, -: Tăng/giảm kích thước font chữ</p>
+        <p>t, g: Tăng/giảm âm lượng</p>
+        <p>Nhấn F12 để tăng kích thước video.</p>
+        <p> </p>
     `;
     infoDiv.appendChild(keyHelpDiv);
 
@@ -174,6 +177,21 @@ javascript:(function(){
         updateInfo();  // Update info
     }
 
+    function adjustVolume(delta) {
+        video.volume = Math.min(1, Math.max(0, video.volume + delta));
+        updateInfo();
+    }
+
+    function toggleInfoDiv() {
+        isHidden = !isHidden;
+        keyHelpDiv.style.display = isHidden ? 'none' : 'block';
+    }
+
+    function adjustFontSize(delta) {
+        fontSize = Math.max(14, fontSize + delta); // Increase/decrease font size
+        infoDiv.style.fontSize = `${fontSize}px`;
+    }
+
     function createButton(label, onClick) {
         const button = document.createElement('button');
         button.innerText = label;
@@ -192,7 +210,7 @@ javascript:(function(){
     }
 
     // Create buttons with specified labels and onClick functions
-    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', 'k', '4', '5', '6', 'j'].forEach(label => {
+    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', '+', '-', 't', 'g', 'j', 'k', '4', '5', '6'].forEach(label => {
         createButton(label, () => {
             switch (label) {
                 case 'b':
@@ -261,13 +279,23 @@ javascript:(function(){
                 case 'm':
                     toggleInfoDiv();
                     break;
-                case 'k':
-                    // Save current work and reset
-                    console.log("Saving current work...");
+                case '+':
+                    adjustFontSize(2); // Increase font size by 2
+                    break;
+                case '-':
+                    adjustFontSize(-2); // Decrease font size by 2
+                    break;
+                case 't':
+                    adjustVolume(0.01);
+                    break;
+                case 'g':
+                    adjustVolume(-0.01);
                     break;
                 case 'j':
-                    // Open the list of saved works
-                    console.log("Opening saved works...");
+                    adjustVolume(0.01);
+                    break;
+                case 'k':
+                    adjustVolume(-0.01);
                     break;
                 default:
                     break;
