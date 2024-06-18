@@ -7,7 +7,7 @@ javascript:(function(){
     let isPaused = false;
     let isHidden = false;
     let fontSize = 14; // Font size for buttons
-    let buttonSize = 20; // Button size (height and width)
+    let buttonSize = 30; // Button size (height and width)
     let countdownTime = 0;
     let countdownInterval;
     let hKeyPressCount = 0; // Counter for "h" key presses
