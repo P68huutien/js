@@ -37,8 +37,8 @@ javascript:(function(){
     buttonContainer.style.top = '200px';
     buttonContainer.style.left = '10px';
     buttonContainer.style.zIndex = '1000';
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.flexWrap = 'wrap';
+    buttonContainer.style.display = 'grid';
+    buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
     buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
@@ -205,42 +205,13 @@ javascript:(function(){
         buttonContainer.appendChild(button);
     }
 
-    createButton('h', () => {
-        hKeyPressCount++;
-        looping = hKeyPressCount % 2 === 0;
-        updateInfo();
-        if (!looping) {
-            clearInterval(countdownInterval);
-        } else {
-            restartLoop();
-        }
+    // Create buttons in the desired order
+    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', '4', '5', '6'].forEach(key => {
+        createButton(key, () => {
+            const event = new KeyboardEvent('keydown', { key });
+            document.dispatchEvent(event);
+        });
     });
-    createButton('b', () => {
-        startTime = video.currentTime - 0.15;
-        updateInfo();
-    });
-    createButton('n', () => {
-        endTime = Math.max(startTime + 0.1, video.currentTime);
-        looping = true;
-        currentLoop = 0;
-        updateInfo();
-        restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
-    });
-    createButton('a', () => adjustTime("start", -1));
-    createButton('s', () => adjustTime("start", 1));
-    createButton('d', () => adjustTime("end", -1));
-    createButton('f', () => adjustTime("end", 1));
-    createButton('z', () => adjustTime("start", -0.1));
-    createButton('x', () => adjustTime("start", 0.1));
-    createButton('c', () => adjustTime("end", -0.1));
-    createButton('v', () => adjustTime("end", 0.1));
-    createButton('1', () => adjustPlaybackRate(-1));
-    createButton('2', () => adjustPlaybackRate(-2));
-    createButton('3', () => adjustPlaybackRate(-3));
-    createButton('4', () => adjustPlaybackRate(1));
-    createButton('5', () => adjustPlaybackRate(2));
-    createButton('6', () => adjustPlaybackRate(3));
-    createButton('m', () => toggleInfoDiv());
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
