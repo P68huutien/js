@@ -6,7 +6,8 @@ javascript:(function(){
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
-    let fontSize = 28; // Double the font size
+    let fontSize = 14; // Font size for buttons
+    let buttonSize = 20; // Button size (height and width)
     let countdownTime = 0;
     let countdownInterval;
     let hKeyPressCount = 0; // Counter for "h" key presses
@@ -27,19 +28,19 @@ javascript:(function(){
     infoDiv.style.zIndex = '1000';
     infoDiv.style.resize = 'both';
     infoDiv.style.overflow = 'auto';
-    infoDiv.style.fontSize = `${fontSize}px`; // Set font size
+    infoDiv.style.fontSize = `${fontSize}px`; // Set initial font size for infoDiv
     infoDiv.style.cursor = 'move';
     document.body.appendChild(infoDiv);
 
     // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '200px';
-    buttonContainer.style.left = '10px';
-    buttonContainer.style.zIndex = '1000';
+    buttonContainer.style.top = '10px';
+    buttonContainer.style.right = '10px';
+    buttonContainer.style.zIndex = '999'; // Lower zIndex to not cover infoDiv
     buttonContainer.style.display = 'grid';
     buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
-    buttonContainer.style.gridAutoRows = 'auto';
+    buttonContainer.style.gridTemplateRows = 'repeat(5, auto)';
     buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
@@ -83,12 +84,9 @@ javascript:(function(){
         <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
         <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
-        <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
-        <p>+, -: Tăng/giảm kích thước font chữ</p>
-        <p>t, g: Tăng/giảm âm lượng</p>
-        <p>Nhấn F12 để tăng kích thước video.</p>
-        <p> </p>
+        <p>k: Lưu công việc hiện tại và đưa về 0</p>
+        <p>j: Mở danh sách công việc đã lưu</p>
     `;
     infoDiv.appendChild(keyHelpDiv);
 
@@ -97,12 +95,12 @@ javascript:(function(){
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>Dùng cho web aanime.biz, tsunagarujp,</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
-            <p>Tốc độ: ${video.playbackRate.toFixed(2)}  Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>
+            <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
-            <p> </p>            
+            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>            
         `;
         infoDiv.appendChild(keyHelpDiv);  // Append keyHelpDiv to infoDiv
     }
@@ -112,7 +110,7 @@ javascript:(function(){
             isPaused = true;
             video.pause();
             currentLoop++;
-            updateInfo();  // Cập nhật thông tin
+            updateInfo();  // Update info
             const segmentDuration = endTime - startTime;
             const pauseDuration = segmentDuration * 2 + 1;
             countdownTime = pauseDuration;
@@ -173,22 +171,7 @@ javascript:(function(){
 
     function adjustPlaybackRate(delta) {
         video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
-        updateInfo();  // Cập nhật thông tin
-    }
-
-    function adjustVolume(delta) {
-        video.volume = Math.min(1, Math.max(0, video.volume + delta));
-        updateInfo();
-    }
-
-    function toggleInfoDiv() {
-        isHidden = !isHidden;
-        keyHelpDiv.style.display = isHidden ? 'none' : 'block';
-    }
-
-    function adjustFontSize(delta) {
-        fontSize = Math.max(10, fontSize + delta);
-        infoDiv.style.fontSize = `${fontSize}px`;
+        updateInfo();  // Update info
     }
 
     function createButton(label, onClick) {
@@ -196,18 +179,20 @@ javascript:(function(){
         button.innerText = label;
         button.style.margin = '5px';
         button.style.padding = '10px';
-        button.style.fontSize = `${fontSize}px`; // Set font size
+        button.style.fontSize = `${fontSize}px`; // Set font size for button
+        button.style.width = `${buttonSize * 2}px`; // Set width of the button (doubled)
+        button.style.height = `${buttonSize * 2}px`; // Set height of the button (doubled)
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'white';
         button.style.color = 'black';
-        button.style.border = '1px solid black';
+        button.style.border = 'none';
         button.style.borderRadius = '5px';
         button.addEventListener('click', onClick);
         buttonContainer.appendChild(button);
     }
 
-    // Create buttons in the desired order
-    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', '4', '5', '6'].forEach(label => {
+    // Create buttons with specified labels and onClick functions
+    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', 'k', '4', '5', '6', 'j'].forEach(label => {
         createButton(label, () => {
             switch (label) {
                 case 'b':
@@ -276,17 +261,13 @@ javascript:(function(){
                 case 'm':
                     toggleInfoDiv();
                     break;
-                case '+':
-                    adjustFontSize(2); // Increase font size by 2
+                case 'k':
+                    // Save current work and reset
+                    console.log("Saving current work...");
                     break;
-                case '-':
-                    adjustFontSize(-2); // Decrease font size by 2
-                    break;
-                case 't':
-                    adjustVolume(0.01);
-                    break;
-                case 'g':
-                    adjustVolume(-0.01);
+                case 'j':
+                    // Open the list of saved works
+                    console.log("Opening saved works...");
                     break;
                 default:
                     break;
