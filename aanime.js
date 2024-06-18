@@ -23,6 +23,7 @@ javascript:(function(){
     infoDiv.style.left = '20px';
     infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     infoDiv.style.color = 'white';
+     buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // 50% transparency
     infoDiv.style.padding = '10px';
     infoDiv.style.borderRadius = '5px';
     infoDiv.style.zIndex = '1000';
