@@ -6,8 +6,7 @@ javascript:(function(){
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
-    let fontSize = 14; // Font size for buttons
-    let buttonSize = 30; // Button size (height and width)
+    let fontSize = 14;
     let countdownTime = 0;
     let countdownInterval;
     let hKeyPressCount = 0; // Counter for "h" key presses
@@ -19,8 +18,8 @@ javascript:(function(){
     // Create HTML element to display info
     const infoDiv = document.createElement('div');
     infoDiv.style.position = 'fixed';
-    infoDiv.style.top = '100px';
-    infoDiv.style.left = '20px';
+    infoDiv.style.top = '10px';
+    infoDiv.style.left = '10px';
     infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     infoDiv.style.color = 'white';
     infoDiv.style.padding = '10px';
@@ -28,7 +27,7 @@ javascript:(function(){
     infoDiv.style.zIndex = '1000';
     infoDiv.style.resize = 'both';
     infoDiv.style.overflow = 'auto';
-    infoDiv.style.fontSize = `${fontSize}px`; // Set initial font size for infoDiv
+    infoDiv.style.fontSize = `${fontSize}px`;
     infoDiv.style.cursor = 'move';
     document.body.appendChild(infoDiv);
 
@@ -36,12 +35,11 @@ javascript:(function(){
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
     buttonContainer.style.top = '200px';
-    buttonContainer.style.right = '20px';
+    buttonContainer.style.left = '10px';
     buttonContainer.style.zIndex = '1000';
-    buttonContainer.style.display = 'grid';
-    buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
-    buttonContainer.style.gridAutoRows = 'auto';
-    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // 50% transparency
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.flexWrap = 'wrap';
+    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
     buttonContainer.style.gap = '5px';
@@ -113,7 +111,7 @@ javascript:(function(){
             isPaused = true;
             video.pause();
             currentLoop++;
-            updateInfo();  // Update info
+            updateInfo();  // Cập nhật thông tin
             const segmentDuration = endTime - startTime;
             const pauseDuration = segmentDuration * 2 + 1;
             countdownTime = pauseDuration;
@@ -174,7 +172,7 @@ javascript:(function(){
 
     function adjustPlaybackRate(delta) {
         video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
-        updateInfo();  // Update info
+        updateInfo();  // Cập nhật thông tin
     }
 
     function adjustVolume(delta) {
@@ -188,7 +186,7 @@ javascript:(function(){
     }
 
     function adjustFontSize(delta) {
-        fontSize = Math.max(14, fontSize + delta); // Increase/decrease font size
+        fontSize = Math.max(10, fontSize + delta);
         infoDiv.style.fontSize = `${fontSize}px`;
     }
 
@@ -197,110 +195,136 @@ javascript:(function(){
         button.innerText = label;
         button.style.margin = '5px';
         button.style.padding = '10px';
-        button.style.fontSize = `${fontSize}px`; // Set font size for button
-        button.style.width = `${buttonSize * 2}px`; // Set width of the button (doubled)
-        button.style.height = `${buttonSize * 2}px`; // Set height of the button (doubled)
+        button.style.fontSize = '28px'; // Double the font size
         button.style.cursor = 'pointer';
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)'; // 50% transparency
+        button.style.backgroundColor = 'white';
         button.style.color = 'black';
-        button.style.border = 'none';
+        button.style.border = '1px solid black';
         button.style.borderRadius = '5px';
         button.addEventListener('click', onClick);
         buttonContainer.appendChild(button);
     }
 
-    // Create buttons with specified labels and onClick functions
-    ['h', 'b', 'n', 'm', 'a', 's', 'd', 'f', 'z', 'x', 'c', 'v', '1', '2', '3', '+', '-', 't', 'g', 'j', 'k', '4', '5', '6'].forEach(label => {
-        createButton(label, () => {
-            switch (label) {
-                case 'b':
-                    startTime = video.currentTime - 0.15;
-                    updateInfo();
-                    break;
-                case 'n':
-                    endTime = Math.max(startTime + 0.1, video.currentTime);
-                    looping = true;
-                    currentLoop = 0;
-                    updateInfo();
+    createButton('h', () => {
+        hKeyPressCount++;
+        looping = hKeyPressCount % 2 === 0;
+        updateInfo();
+        if (!looping) {
+            clearInterval(countdownInterval);
+        } else {
+            restartLoop();
+        }
+    });
+    createButton('b', () => {
+        startTime = video.currentTime - 0.15;
+        updateInfo();
+    });
+    createButton('n', () => {
+        endTime = Math.max(startTime + 0.1, video.currentTime);
+        looping = true;
+        currentLoop = 0;
+        updateInfo();
+        restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
+    });
+    createButton('a', () => adjustTime("start", -1));
+    createButton('s', () => adjustTime("start", 1));
+    createButton('d', () => adjustTime("end", -1));
+    createButton('f', () => adjustTime("end", 1));
+    createButton('z', () => adjustTime("start", -0.1));
+    createButton('x', () => adjustTime("start", 0.1));
+    createButton('c', () => adjustTime("end", -0.1));
+    createButton('v', () => adjustTime("end", 0.1));
+    createButton('1', () => adjustPlaybackRate(-1));
+    createButton('2', () => adjustPlaybackRate(-2));
+    createButton('3', () => adjustPlaybackRate(-3));
+    createButton('4', () => adjustPlaybackRate(1));
+    createButton('5', () => adjustPlaybackRate(2));
+    createButton('6', () => adjustPlaybackRate(3));
+    createButton('m', () => toggleInfoDiv());
+
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 'b':
+                startTime = video.currentTime - 0.15;
+                updateInfo();
+                break;
+            case 'n':
+                endTime = Math.max(startTime + 0.1, video.currentTime);
+                looping = true;
+                currentLoop = 0;
+                updateInfo();
+                restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
+                break;
+            case 'h':
+                hKeyPressCount++;
+                looping = hKeyPressCount % 2 === 0;
+                updateInfo();
+                if (!looping) {
+                    clearInterval(countdownInterval);
+                } else {
                     restartLoop();
-                    break;
-                case 'h':
-                    hKeyPressCount++;
-                    looping = hKeyPressCount % 2 === 0;
-                    updateInfo();
-                    if (!looping) {
-                        clearInterval(countdownInterval);
-                    } else {
-                        restartLoop();
-                    }
-                    break;
-                case 'a':
-                    adjustTime("start", -1);
-                    break;
-                case 's':
-                    adjustTime("start", 1);
-                    break;
-                case 'd':
-                    adjustTime("end", -1);
-                    break;
-                case 'f':
-                    adjustTime("end", 1);
-                    break;
-                case 'z':
-                    adjustTime("start", -0.1);
-                    break;
-                case 'x':
-                    adjustTime("start", 0.1);
-                    break;
-                case 'c':
-                    adjustTime("end", -0.1);
-                    break;
-                case 'v':
-                    adjustTime("end", 0.1);
-                    break;
-                case '1':
-                    adjustPlaybackRate(-1);
-                    break;
-                case '2':
-                    adjustPlaybackRate(-2);
-                    break;
-                case '3':
-                    adjustPlaybackRate(-3);
-                    break;
-                case '4':
-                    adjustPlaybackRate(1);
-                    break;
-                case '5':
-                    adjustPlaybackRate(2);
-                    break;
-                case '6':
-                    adjustPlaybackRate(3);
-                    break;
-                case 'm':
-                    toggleInfoDiv();
-                    break;
-                case '+':
-                    adjustFontSize(2); // Increase font size by 2
-                    break;
-                case '-':
-                    adjustFontSize(-2); // Decrease font size by 2
-                    break;
-                case 't':
-                    adjustVolume(0.01);
-                    break;
-                case 'g':
-                    adjustVolume(-0.01);
-                    break;
-                case 'j':
-                    adjustVolume(0.01);
-                    break;
-                case 'k':
-                    adjustVolume(-0.01);
-                    break;
-                default:
-                    break;
-            }
-        });
+                }
+                break;
+            case 'a':
+                adjustTime("start", -1);
+                break;
+            case 's':
+                adjustTime("start", 1);
+                break;
+            case 'd':
+                adjustTime("end", -1);
+                break;
+            case 'f':
+                adjustTime("end", 1);
+                break;
+            case 'z':
+                adjustTime("start", -0.1);
+                break;
+            case 'x':
+                adjustTime("start", 0.1);
+                break;
+            case 'c':
+                adjustTime("end", -0.1);
+                break;
+            case 'v':
+                adjustTime("end", 0.1);
+                break;
+            case '1':
+                adjustPlaybackRate(-1);
+                break;
+            case '2':
+                adjustPlaybackRate(-2);
+                break;
+            case '3':
+                adjustPlaybackRate(-3);
+                break;
+            case '4':
+                adjustPlaybackRate(1);
+                break;
+            case '5':
+                adjustPlaybackRate(2);
+                break;
+            case '6':
+                adjustPlaybackRate(3);
+                break;
+            case 'm':
+                toggleInfoDiv();
+                break;
+            case '+':
+                adjustFontSize(1);
+                break;
+            case '-':
+                adjustFontSize(-1);
+                break;
+            case 't':
+                adjustVolume(0.01);
+                break;
+            case 'g':
+                adjustVolume(-0.01);
+                break;
+            default:
+                break;
+        }
     });
 
     // Update initial info
