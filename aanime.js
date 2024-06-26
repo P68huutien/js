@@ -23,6 +23,7 @@ javascript:(function(){
     infoDiv.style.left = '20px';
     infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     infoDiv.style.color = 'white';
+     buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // 50% transparency
     infoDiv.style.padding = '10px';
     infoDiv.style.borderRadius = '5px';
     infoDiv.style.zIndex = '1000';
@@ -35,13 +36,13 @@ javascript:(function(){
     // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '200px';
+    buttonContainer.style.top = '1000px';
     buttonContainer.style.right = '20px';
     buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'grid';
     buttonContainer.style.gridTemplateColumns = 'repeat(4, auto)';
     buttonContainer.style.gridAutoRows = 'auto';
-    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // 50% transparency
+    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
     buttonContainer.style.gap = '5px';
@@ -201,7 +202,7 @@ javascript:(function(){
         button.style.width = `${buttonSize * 2}px`; // Set width of the button (doubled)
         button.style.height = `${buttonSize * 2}px`; // Set height of the button (doubled)
         button.style.cursor = 'pointer';
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)'; // 50% transparency
+        button.style.backgroundColor = 'white';
         button.style.color = 'black';
         button.style.border = 'none';
         button.style.borderRadius = '5px';
