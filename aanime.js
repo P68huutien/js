@@ -11,87 +11,79 @@ javascript:(function(){
     let countdownInterval;
     let hKeyPressCount = 0;
 
+    function findSuitableContainer() {
+        // Tìm kiếm các phần tử phổ biến trong giao diện TikTok
+        const possibleContainers = [
+            document.querySelector('.tiktok-1qb12g8-DivThreeColumnContainer'),
+            document.querySelector('.tiktok-ywuvyb-DivBodyContainer'),
+            document.querySelector('main'),
+            document.body
+        ];
+
+        // Trả về phần tử đầu tiên tồn tại
+        return possibleContainers.find(container => container !== null);
+    }
+
+    const container = findSuitableContainer();
+
     const video = document.querySelector('video');
+    if (!video) {
+        alert('Không tìm thấy video trên trang.');
+        return;
+    }
+
     video.volume = 0.5;
     video.playbackRate = 0.8;
 
+    const controlPanel = document.createElement('div');
+    controlPanel.style.position = 'fixed';
+    controlPanel.style.top = '10px';
+    controlPanel.style.left = '10px';
+    controlPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    controlPanel.style.color = 'white';
+    controlPanel.style.padding = '10px';
+    controlPanel.style.borderRadius = '5px';
+    controlPanel.style.zIndex = '2147483647';
+    controlPanel.style.fontSize = `${fontSize}px`;
+    controlPanel.style.width = '300px';
+    controlPanel.style.maxHeight = '80vh';
+    controlPanel.style.overflowY = 'auto';
+
     const infoDiv = document.createElement('div');
-    infoDiv.style.position = 'fixed';
-    infoDiv.style.top = '10px';
-    infoDiv.style.left = '10px';
-    infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-    infoDiv.style.color = 'white';
-    infoDiv.style.padding = '10px';
-    infoDiv.style.borderRadius = '5px';
-    infoDiv.style.zIndex = '1000';
-    infoDiv.style.resize = 'both';
-    infoDiv.style.overflow = 'auto';
-    infoDiv.style.fontSize = `${fontSize}px`;
-    document.body.appendChild(infoDiv);
+    controlPanel.appendChild(infoDiv);
 
     const buttonContainer = document.createElement('div');
-    buttonContainer.style.position = 'fixed';
-    buttonContainer.style.top = '200px';
-    buttonContainer.style.left = '10px';
-    buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'flex';
     buttonContainer.style.flexWrap = 'wrap';
-    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-    buttonContainer.style.padding = '10px';
-    buttonContainer.style.borderRadius = '5px';
     buttonContainer.style.gap = '5px';
-    document.body.appendChild(buttonContainer);
+    buttonContainer.style.marginTop = '10px';
+    controlPanel.appendChild(buttonContainer);
 
-    let isDraggingInfoDiv = false;
-    let isDraggingButtonContainer = false;
+    container.appendChild(controlPanel);
+
+    let isDragging = false;
     let dragStartX, dragStartY, initialLeft, initialTop;
 
-    function makeDraggable(element, dragFlag) {
-        element.addEventListener('touchstart', function(e) {
-            dragFlag.isDragging = true;
-            dragStartX = e.touches[0].clientX;
-            dragStartY = e.touches[0].clientY;
-            initialLeft = parseInt(element.style.left, 10);
-            initialTop = parseInt(element.style.top, 10);
-        });
+    controlPanel.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        initialLeft = parseInt(controlPanel.style.left, 10);
+        initialTop = parseInt(controlPanel.style.top, 10);
+    });
 
-        element.addEventListener('mousedown', function(e) {
-            dragFlag.isDragging = true;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-            initialLeft = parseInt(element.style.left, 10);
-            initialTop = parseInt(element.style.top, 10);
-        });
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            let deltaX = e.clientX - dragStartX;
+            let deltaY = e.clientY - dragStartY;
+            controlPanel.style.left = `${initialLeft + deltaX}px`;
+            controlPanel.style.top = `${initialTop + deltaY}px`;
+        }
+    });
 
-        document.addEventListener('touchmove', function(e) {
-            if (dragFlag.isDragging) {
-                let deltaX = e.touches[0].clientX - dragStartX;
-                let deltaY = e.touches[0].clientY - dragStartY;
-                element.style.left = `${initialLeft + deltaX}px`;
-                element.style.top = `${initialTop + deltaY}px`;
-            }
-        });
-
-        document.addEventListener('mousemove', function(e) {
-            if (dragFlag.isDragging) {
-                let deltaX = e.clientX - dragStartX;
-                let deltaY = e.clientY - dragStartY;
-                element.style.left = `${initialLeft + deltaX}px`;
-                element.style.top = `${initialTop + deltaY}px`;
-            }
-        });
-
-        document.addEventListener('touchend', function() {
-            dragFlag.isDragging = false;
-        });
-
-        document.addEventListener('mouseup', function() {
-            dragFlag.isDragging = false;
-        });
-    }
-
-    makeDraggable(infoDiv, { isDragging: false });
-    makeDraggable(buttonContainer, { isDragging: false });
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
 
     const keyHelpDiv = document.createElement('div');
     keyHelpDiv.innerHTML = `
@@ -109,8 +101,6 @@ javascript:(function(){
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
         <p>t, g: Tăng/giảm âm lượng</p>
-        <p>Nhấn F12 để tăng kích thước video.</p>
-        <p> </p>
     `;
     infoDiv.appendChild(keyHelpDiv);
 
@@ -208,20 +198,20 @@ javascript:(function(){
 
     function adjustFontSize(delta) {
         fontSize = Math.max(10, fontSize + delta);
-        infoDiv.style.fontSize = `${fontSize}px`;
+        controlPanel.style.fontSize = `${fontSize}px`;
     }
 
     function createButton(label, onClick) {
         const button = document.createElement('button');
         button.innerText = label;
-        button.style.margin = '5px';
-        button.style.padding = '10px';
-        button.style.width = '40px';
-        button.style.fontSize = '28px';
+        button.style.margin = '2px';
+        button.style.padding = '5px';
+        button.style.width = '30px';
+        button.style.fontSize = '16px';
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-        button.style.color = 'black';
-        button.style.border = '1px solid black';
+        button.style.color = 'white';
+        button.style.border = '1px solid white';
         button.style.borderRadius = '5px';
         button.addEventListener('click', onClick);
         buttonContainer.appendChild(button);
