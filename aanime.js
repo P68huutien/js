@@ -47,12 +47,29 @@ javascript:(function(){
     let dragStartX, dragStartY, initialLeft, initialTop;
 
     function makeDraggable(element, dragFlag) {
+        element.addEventListener('touchstart', function(e) {
+            dragFlag.isDragging = true;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            initialLeft = parseInt(element.style.left, 10);
+            initialTop = parseInt(element.style.top, 10);
+        });
+
         element.addEventListener('mousedown', function(e) {
             dragFlag.isDragging = true;
             dragStartX = e.clientX;
             dragStartY = e.clientY;
             initialLeft = parseInt(element.style.left, 10);
             initialTop = parseInt(element.style.top, 10);
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            if (dragFlag.isDragging) {
+                let deltaX = e.touches[0].clientX - dragStartX;
+                let deltaY = e.touches[0].clientY - dragStartY;
+                element.style.left = `${initialLeft + deltaX}px`;
+                element.style.top = `${initialTop + deltaY}px`;
+            }
         });
 
         document.addEventListener('mousemove', function(e) {
@@ -62,6 +79,10 @@ javascript:(function(){
                 element.style.left = `${initialLeft + deltaX}px`;
                 element.style.top = `${initialTop + deltaY}px`;
             }
+        });
+
+        document.addEventListener('touchend', function() {
+            dragFlag.isDragging = false;
         });
 
         document.addEventListener('mouseup', function() {
@@ -98,7 +119,7 @@ javascript:(function(){
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>Dùng cho web aanime.biz, tsunagarujp,</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
-            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
