@@ -12,15 +12,12 @@ javascript:(function(){
     let hKeyPressCount = 0;
 
     function findSuitableContainer() {
-        // Tìm kiếm các phần tử phổ biến trong giao diện TikTok
         const possibleContainers = [
             document.querySelector('.tiktok-1qb12g8-DivThreeColumnContainer'),
             document.querySelector('.tiktok-ywuvyb-DivBodyContainer'),
             document.querySelector('main'),
             document.body
         ];
-
-        // Trả về phần tử đầu tiên tồn tại
         return possibleContainers.find(container => container !== null);
     }
 
@@ -35,55 +32,58 @@ javascript:(function(){
     video.volume = 0.5;
     video.playbackRate = 0.8;
 
-    const controlPanel = document.createElement('div');
-    controlPanel.style.position = 'fixed';
-    controlPanel.style.top = '10px';
-    controlPanel.style.left = '10px';
-    controlPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    controlPanel.style.color = 'white';
-    controlPanel.style.padding = '10px';
-    controlPanel.style.borderRadius = '5px';
-    controlPanel.style.zIndex = '2147483647';
-    controlPanel.style.fontSize = `${fontSize}px`;
-    controlPanel.style.width = '300px';
-    controlPanel.style.maxHeight = '80vh';
-    controlPanel.style.overflowY = 'auto';
+    function createPanel(top, left) {
+        const panel = document.createElement('div');
+        panel.style.position = 'fixed';
+        panel.style.top = top;
+        panel.style.left = left;
+        panel.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        panel.style.color = 'white';
+        panel.style.padding = '10px';
+        panel.style.borderRadius = '5px';
+        panel.style.zIndex = '2147483647';
+        panel.style.fontSize = `${fontSize}px`;
+        panel.style.maxHeight = '80vh';
+        panel.style.overflowY = 'auto';
+        return panel;
+    }
 
-    const infoDiv = document.createElement('div');
-    controlPanel.appendChild(infoDiv);
+    const infoPanel = createPanel('10px', '10px');
+    infoPanel.style.width = '300px';
+    container.appendChild(infoPanel);
 
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.flexWrap = 'wrap';
-    buttonContainer.style.gap = '5px';
-    buttonContainer.style.marginTop = '10px';
-    controlPanel.appendChild(buttonContainer);
+    const buttonPanel = createPanel('10px', '320px');
+    buttonPanel.style.width = 'auto';
+    container.appendChild(buttonPanel);
 
-    container.appendChild(controlPanel);
+    function makeDraggable(element) {
+        let isDragging = false;
+        let dragStartX, dragStartY, initialLeft, initialTop;
 
-    let isDragging = false;
-    let dragStartX, dragStartY, initialLeft, initialTop;
+        element.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            initialLeft = parseInt(element.style.left, 10);
+            initialTop = parseInt(element.style.top, 10);
+        });
 
-    controlPanel.addEventListener('mousedown', function(e) {
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        initialLeft = parseInt(controlPanel.style.left, 10);
-        initialTop = parseInt(controlPanel.style.top, 10);
-    });
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                let deltaX = e.clientX - dragStartX;
+                let deltaY = e.clientY - dragStartY;
+                element.style.left = `${initialLeft + deltaX}px`;
+                element.style.top = `${initialTop + deltaY}px`;
+            }
+        });
 
-    document.addEventListener('mousemove', function(e) {
-        if (isDragging) {
-            let deltaX = e.clientX - dragStartX;
-            let deltaY = e.clientY - dragStartY;
-            controlPanel.style.left = `${initialLeft + deltaX}px`;
-            controlPanel.style.top = `${initialTop + deltaY}px`;
-        }
-    });
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+    }
 
-    document.addEventListener('mouseup', function() {
-        isDragging = false;
-    });
+    makeDraggable(infoPanel);
+    makeDraggable(buttonPanel);
 
     const keyHelpDiv = document.createElement('div');
     keyHelpDiv.innerHTML = `
@@ -102,10 +102,10 @@ javascript:(function(){
         <p>+, -: Tăng/giảm kích thước font chữ</p>
         <p>t, g: Tăng/giảm âm lượng</p>
     `;
-    infoDiv.appendChild(keyHelpDiv);
+    infoPanel.appendChild(keyHelpDiv);
 
     function updateInfo() {
-        infoDiv.innerHTML = `
+        infoPanel.innerHTML = `
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>PhamHuuTien.com</p>
             <p>Dùng cho web aanime.biz</p>
@@ -116,7 +116,7 @@ javascript:(function(){
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
-        infoDiv.appendChild(keyHelpDiv);
+        infoPanel.appendChild(keyHelpDiv);
     }
 
     function loopVideo() {
@@ -198,7 +198,8 @@ javascript:(function(){
 
     function adjustFontSize(delta) {
         fontSize = Math.max(10, fontSize + delta);
-        controlPanel.style.fontSize = `${fontSize}px`;
+        infoPanel.style.fontSize = `${fontSize}px`;
+        buttonPanel.style.fontSize = `${fontSize}px`;
     }
 
     function createButton(label, onClick) {
@@ -214,7 +215,7 @@ javascript:(function(){
         button.style.border = '1px solid white';
         button.style.borderRadius = '5px';
         button.addEventListener('click', onClick);
-        buttonContainer.appendChild(button);
+        buttonPanel.appendChild(button);
     }
 
     createButton('h', () => {
