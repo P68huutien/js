@@ -182,10 +182,8 @@ javascript:(function(){
         if (type === "start") {
             startTime = Math.max(0, startTime + delta);
             updateInfo();
-            video.currentTime = startTime;
-            video.play();
-            if (looping) {
-                restartLoop();
+            if (video.currentTime < startTime) {
+                video.currentTime = startTime;
             }
         } else if (type === "end") {
             endTime = Math.max(startTime + 0.1, endTime + delta);
@@ -218,7 +216,7 @@ javascript:(function(){
         button.innerText = label;
         button.style.margin = '5px';
         button.style.padding = '10px';
-        button.style.width = '90px'; // Tăng độ rộng của nút
+        button.style.width = '90px';
         button.style.fontSize = '28px';
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
