@@ -9,18 +9,17 @@ javascript:(function(){
     let fontSize = 14;
     let countdownTime = 0;
     let countdownInterval;
-    let hKeyPressCount = 0; // Counter for "h" key presses
+    let hKeyPressCount = 0;
 
     const video = document.querySelector('video');
-    video.volume = 0.5; // Set initial volume to 50%
-    video.playbackRate = 0.8; // Set initial playback speed to 80%
+    video.volume = 0.5;
+    video.playbackRate = 0.8;
 
-    // Create HTML element to display info
     const infoDiv = document.createElement('div');
     infoDiv.style.position = 'fixed';
     infoDiv.style.top = '10px';
     infoDiv.style.left = '10px';
-    infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    infoDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
     infoDiv.style.color = 'white';
     infoDiv.style.padding = '10px';
     infoDiv.style.borderRadius = '5px';
@@ -28,10 +27,8 @@ javascript:(function(){
     infoDiv.style.resize = 'both';
     infoDiv.style.overflow = 'auto';
     infoDiv.style.fontSize = `${fontSize}px`;
-    infoDiv.style.cursor = 'move';
     document.body.appendChild(infoDiv);
 
-    // Create a container for the buttons
     const buttonContainer = document.createElement('div');
     buttonContainer.style.position = 'fixed';
     buttonContainer.style.top = '200px';
@@ -39,37 +36,42 @@ javascript:(function(){
     buttonContainer.style.zIndex = '1000';
     buttonContainer.style.display = 'flex';
     buttonContainer.style.flexWrap = 'wrap';
-    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    buttonContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
     buttonContainer.style.padding = '10px';
     buttonContainer.style.borderRadius = '5px';
     buttonContainer.style.gap = '5px';
     document.body.appendChild(buttonContainer);
 
-    let isDragging = false;
+    let isDraggingInfoDiv = false;
+    let isDraggingButtonContainer = false;
     let dragStartX, dragStartY, initialLeft, initialTop;
 
-    infoDiv.addEventListener('mousedown', function(e) {
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        initialLeft = parseInt(infoDiv.style.left, 10);
-        initialTop = parseInt(infoDiv.style.top, 10);
-    });
+    function makeDraggable(element, dragFlag) {
+        element.addEventListener('mousedown', function(e) {
+            dragFlag.isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            initialLeft = parseInt(element.style.left, 10);
+            initialTop = parseInt(element.style.top, 10);
+        });
 
-    document.addEventListener('mousemove', function(e) {
-        if (isDragging) {
-            let deltaX = e.clientX - dragStartX;
-            let deltaY = e.clientY - dragStartY;
-            infoDiv.style.left = `${initialLeft + deltaX}px`;
-            infoDiv.style.top = `${initialTop + deltaY}px`;
-        }
-    });
+        document.addEventListener('mousemove', function(e) {
+            if (dragFlag.isDragging) {
+                let deltaX = e.clientX - dragStartX;
+                let deltaY = e.clientY - dragStartY;
+                element.style.left = `${initialLeft + deltaX}px`;
+                element.style.top = `${initialTop + deltaY}px`;
+            }
+        });
 
-    document.addEventListener('mouseup', function() {
-        isDragging = false;
-    });
+        document.addEventListener('mouseup', function() {
+            dragFlag.isDragging = false;
+        });
+    }
 
-    // Create a container for the key help info
+    makeDraggable(infoDiv, { isDragging: false });
+    makeDraggable(buttonContainer, { isDragging: false });
+
     const keyHelpDiv = document.createElement('div');
     keyHelpDiv.innerHTML = `
         <p>Phím hướng dẫn:</p>
@@ -96,14 +98,13 @@ javascript:(function(){
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>Dùng cho web aanime.biz, tsunagarujp,</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
-            <p>Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
+            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ phát: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
             <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
-            <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
-            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}%</p>            
+            <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
-        infoDiv.appendChild(keyHelpDiv);  // Append keyHelpDiv to infoDiv
+        infoDiv.appendChild(keyHelpDiv);
     }
 
     function loopVideo() {
@@ -111,9 +112,9 @@ javascript:(function(){
             isPaused = true;
             video.pause();
             currentLoop++;
-            updateInfo();  // Cập nhật thông tin
+            updateInfo();
             const segmentDuration = endTime - startTime;
-            const pauseDuration = segmentDuration * 2 + 1;
+            const pauseDuration = segmentDuration * 2 ;
             countdownTime = pauseDuration;
             startCountdown();
             if (currentLoop < loopCount) {
@@ -172,7 +173,7 @@ javascript:(function(){
 
     function adjustPlaybackRate(delta) {
         video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
-        updateInfo();  // Cập nhật thông tin
+        updateInfo();
     }
 
     function adjustVolume(delta) {
@@ -195,9 +196,10 @@ javascript:(function(){
         button.innerText = label;
         button.style.margin = '5px';
         button.style.padding = '10px';
-        button.style.fontSize = '28px'; // Double the font size
+        button.style.width = '90px'; // Tăng độ rộng của nút
+        button.style.fontSize = '28px';
         button.style.cursor = 'pointer';
-        button.style.backgroundColor = 'white';
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
         button.style.color = 'black';
         button.style.border = '1px solid black';
         button.style.borderRadius = '5px';
@@ -224,7 +226,7 @@ javascript:(function(){
         looping = true;
         currentLoop = 0;
         updateInfo();
-        restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
+        restartLoop();
     });
     createButton('a', () => adjustTime("start", -1));
     createButton('s', () => adjustTime("start", 1));
@@ -253,7 +255,7 @@ javascript:(function(){
                 looping = true;
                 currentLoop = 0;
                 updateInfo();
-                restartLoop(); // Gọi hàm restartLoop() khi nhấn phím n
+                restartLoop();
                 break;
             case 'h':
                 hKeyPressCount++;
@@ -327,9 +329,6 @@ javascript:(function(){
         }
     });
 
-    // Update initial info
     updateInfo();
-
-    // Clear console
     console.clear();
 })();
