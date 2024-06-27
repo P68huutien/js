@@ -117,7 +117,8 @@ javascript:(function(){
     function updateInfo() {
         infoDiv.innerHTML = `
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
-            <p>Dùng cho web aanime.biz, tsunagarujp,</p>
+            <p>PhamHuuTien.com</p>
+            <p>Dùng cho web aanime.biz</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
             <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
