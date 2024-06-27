@@ -216,7 +216,7 @@ javascript:(function(){
         button.innerText = label;
         button.style.margin = '5px';
         button.style.padding = '10px';
-        button.style.width = '75px';
+        button.style.width = '60px';
         button.style.fontSize = '28px';
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
