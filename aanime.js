@@ -102,6 +102,7 @@ javascript:(function(){
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
         <p>u, i: Tăng/giảm âm lượng</p>
+        <p>o, p: Chuyển đến đoạn trước/sau</p>
     `;
     infoPanel.appendChild(keyHelpDiv);
 
@@ -174,7 +175,7 @@ javascript:(function(){
         currentSegmentIndex = 0;
         updateInfo();
         setTimeout(() => {
-            video.currentTime = segments[0].start;
+            video.currentTime = segments[currentSegmentIndex].start;
             isPaused = false;
             video.play();
         }, 1000);
@@ -183,8 +184,8 @@ javascript:(function(){
     video.addEventListener('timeupdate', loopVideo);
 
     function adjustTime(type, delta) {
-        if (segments.length === 0) return;
-        let currentSegment = segments[segments.length - 1];
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
         if (type === "start") {
             currentSegment.start = Math.max(0, currentSegment.start + delta);
             updateInfo();
@@ -218,6 +219,14 @@ javascript:(function(){
         buttonPanel.style.fontSize = `${fontSize}px`;
     }
 
+    function changeSegment(delta) {
+        if (segments.length === 0) return;
+        currentSegmentIndex = (currentSegmentIndex + delta + segments.length) % segments.length;
+        currentLoop = 0;
+        video.currentTime = segments[currentSegmentIndex].start;
+        updateInfo();
+    }
+
     function createButton(label, onClick) {
         const button = document.createElement('button');
         button.innerText = label;
@@ -246,11 +255,12 @@ javascript:(function(){
     });
     createButton('b', () => {
         segments.push({start: video.currentTime - 0.15, end: video.currentTime});
+        currentSegmentIndex = segments.length - 1;
         updateInfo();
     });
     createButton('n', () => {
         if (segments.length > 0) {
-            segments[segments.length - 1].end = Math.max(segments[segments.length - 1].start + 0.1, video.currentTime);
+            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
             updateInfo();
         }
     });
@@ -280,16 +290,19 @@ javascript:(function(){
     createButton('m', () => toggleInfoDiv());
     createButton('u', () => adjustVolume(0.01));
     createButton('i', () => adjustVolume(-0.01));
+    createButton('o', () => changeSegment(-1));
+    createButton('p', () => changeSegment(1));
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
                 segments.push({start: video.currentTime - 0.15, end: video.currentTime});
+                currentSegmentIndex = segments.length - 1;
                 updateInfo();
                 break;
             case 'n':
                 if (segments.length > 0) {
-                    segments[segments.length - 1].end = Math.max(segments[segments.length - 1].start + 0.1, video.currentTime);
+                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
                     updateInfo();
                 }
                 break;
