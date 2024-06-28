@@ -1,6 +1,6 @@
 javascript:(function(){
-    let startTime = 0;
-    let endTime = 0;
+    let segments = [];
+    let currentSegmentIndex = -1;
     let looping = false;
     let loopCount = 50;
     let currentLoop = 0;
@@ -95,24 +95,30 @@ javascript:(function(){
         <p>z, x: Điều chỉnh điểm bắt đầu (-0.1s, +0.1s)</p>
         <p>c, v: Điều chỉnh điểm kết thúc (-0.1s, +0.1s)</p>
         <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
-        <p>n: Đặt điểm kết thúc và bắt đầu lặp lại</p>
+        <p>n: Đặt điểm kết thúc cho đoạn hiện tại</p>
+        <p>l: Bắt đầu lặp lại các đoạn</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
         <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
-        <p>t, g: Tăng/giảm âm lượng</p>
+        <p>u, i: Tăng/giảm âm lượng</p>
     `;
     infoPanel.appendChild(keyHelpDiv);
 
     function updateInfo() {
+        let segmentsInfo = segments.map((seg, index) => 
+            `Đoạn ${index + 1}: ${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s`
+        ).join('<br>');
+
         infoPanel.innerHTML = `
             <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
             <p>PhamHuuTien.com</p>
             <p>Dùng cho web aanime.biz</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
-            <p>Thời gian bắt đầu: ${startTime.toFixed(2)}s</p>
-            <p>Thời gian kết thúc: ${endTime.toFixed(2)}s</p>
+            <p>Các đoạn đã chọn:</p>
+            ${segmentsInfo}
+            <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
             <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
@@ -120,25 +126,32 @@ javascript:(function(){
     }
 
     function loopVideo() {
-        if (looping && video.currentTime >= endTime && !isPaused) {
-            isPaused = true;
-            video.pause();
-            currentLoop++;
-            updateInfo();
-            const segmentDuration = endTime - startTime;
-            const pauseDuration = segmentDuration * 2 ;
-            countdownTime = pauseDuration;
-            startCountdown();
-            if (currentLoop < loopCount) {
-                setTimeout(() => {
-                    video.currentTime = startTime;
-                    isPaused = false;
-                    video.play();
-                }, pauseDuration * 1000);
-            } else {
-                looping = false;
-                console.log("Hoàn thành lặp lại.");
-                clearInterval(countdownInterval);
+        if (looping && !isPaused) {
+            let currentSegment = segments[currentSegmentIndex];
+            if (video.currentTime >= currentSegment.end) {
+                isPaused = true;
+                video.pause();
+                currentLoop++;
+                updateInfo();
+                const segmentDuration = currentSegment.end - currentSegment.start;
+                const pauseDuration = segmentDuration * 2;
+                countdownTime = pauseDuration;
+                startCountdown();
+                if (currentLoop < loopCount) {
+                    setTimeout(() => {
+                        video.currentTime = currentSegment.start;
+                        isPaused = false;
+                        video.play();
+                    }, pauseDuration * 1000);
+                } else {
+                    currentLoop = 0;
+                    currentSegmentIndex = (currentSegmentIndex + 1) % segments.length;
+                    setTimeout(() => {
+                        video.currentTime = segments[currentSegmentIndex].start;
+                        isPaused = false;
+                        video.play();
+                    }, pauseDuration * 1000);
+                }
             }
         }
     }
@@ -158,25 +171,28 @@ javascript:(function(){
         isPaused = true;
         video.pause();
         currentLoop = 0;
+        currentSegmentIndex = 0;
         updateInfo();
         setTimeout(() => {
-            video.currentTime = startTime;
+            video.currentTime = segments[0].start;
             isPaused = false;
             video.play();
-        }, (endTime - startTime) * 1000);
+        }, 1000);
     }
 
     video.addEventListener('timeupdate', loopVideo);
 
     function adjustTime(type, delta) {
+        if (segments.length === 0) return;
+        let currentSegment = segments[segments.length - 1];
         if (type === "start") {
-            startTime = Math.max(0, startTime + delta);
+            currentSegment.start = Math.max(0, currentSegment.start + delta);
             updateInfo();
-            if (video.currentTime < startTime) {
-                video.currentTime = startTime;
+            if (video.currentTime < currentSegment.start) {
+                video.currentTime = currentSegment.start;
             }
         } else if (type === "end") {
-            endTime = Math.max(startTime + 0.1, endTime + delta);
+            currentSegment.end = Math.max(currentSegment.start + 0.1, currentSegment.end + delta);
             updateInfo();
         }
     }
@@ -229,15 +245,23 @@ javascript:(function(){
         }
     });
     createButton('b', () => {
-        startTime = video.currentTime - 0.15;
+        segments.push({start: video.currentTime - 0.15, end: video.currentTime});
         updateInfo();
     });
     createButton('n', () => {
-        endTime = Math.max(startTime + 0.1, video.currentTime);
-        looping = true;
-        currentLoop = 0;
-        updateInfo();
-        restartLoop();
+        if (segments.length > 0) {
+            segments[segments.length - 1].end = Math.max(segments[segments.length - 1].start + 0.1, video.currentTime);
+            updateInfo();
+        }
+    });
+    createButton('l', () => {
+        if (segments.length > 0) {
+            looping = true;
+            currentLoop = 0;
+            currentSegmentIndex = 0;
+            updateInfo();
+            restartLoop();
+        }
     });
     createButton('a', () => adjustTime("start", -1));
     createButton('s', () => adjustTime("start", 1));
@@ -254,19 +278,29 @@ javascript:(function(){
     createButton('5', () => adjustPlaybackRate(2));
     createButton('6', () => adjustPlaybackRate(3));
     createButton('m', () => toggleInfoDiv());
+    createButton('u', () => adjustVolume(0.01));
+    createButton('i', () => adjustVolume(-0.01));
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
-                startTime = video.currentTime - 0.15;
+                segments.push({start: video.currentTime - 0.15, end: video.currentTime});
                 updateInfo();
                 break;
             case 'n':
-                endTime = Math.max(startTime + 0.1, video.currentTime);
-                looping = true;
-                currentLoop = 0;
-                updateInfo();
-                restartLoop();
+                if (segments.length > 0) {
+                    segments[segments.length - 1].end = Math.max(segments[segments.length - 1].start + 0.1, video.currentTime);
+                    updateInfo();
+                }
+                break;
+            case 'l':
+                if (segments.length > 0) {
+                    looping = true;
+                    currentLoop = 0;
+                    currentSegmentIndex = 0;
+                    updateInfo();
+                    restartLoop();
+                }
                 break;
             case 'h':
                 hKeyPressCount++;
@@ -329,10 +363,10 @@ javascript:(function(){
             case '-':
                 adjustFontSize(-1);
                 break;
-            case 't':
+            case 'u':
                 adjustVolume(0.01);
                 break;
-            case 'g':
+            case 'i':
                 adjustVolume(-0.01);
                 break;
             default:
