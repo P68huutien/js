@@ -53,7 +53,7 @@ javascript:(function() {
     container.appendChild(infoPanel);
 
     const buttonPanel = createPanel('10px', '320px');
-    buttonPanel.style.width = '55px';
+    buttonPanel.style.width = 'auto';
     container.appendChild(buttonPanel);
 
     function makeDraggable(element) {
