@@ -382,6 +382,12 @@ javascript:(function(){
             case 'i':
                 adjustVolume(-0.01);
                 break;
+            case 'o':
+                changeSegment(-1);
+                break;
+            case 'p':
+                changeSegment(1);
+                break;
             default:
                 break;
         }
