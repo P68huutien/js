@@ -1,4 +1,4 @@
-javascript:(function(){
+javascript:(function() {
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
@@ -53,7 +53,7 @@ javascript:(function(){
     container.appendChild(infoPanel);
 
     const buttonPanel = createPanel('10px', '320px');
-    buttonPanel.style.width = 'auto';
+    buttonPanel.style.width = '55px';
     container.appendChild(buttonPanel);
 
     function makeDraggable(element) {
