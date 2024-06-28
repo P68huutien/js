@@ -1,4 +1,4 @@
-javascript:(function() {
+(function() {
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
@@ -37,7 +37,7 @@ javascript:(function() {
         panel.style.position = 'fixed';
         panel.style.top = top;
         panel.style.left = left;
-        panel.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        panel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Adjusted transparency
         panel.style.color = 'white';
         panel.style.padding = '10px';
         panel.style.borderRadius = '5px';
@@ -98,6 +98,7 @@ javascript:(function() {
         <p>n: Đặt điểm kết thúc cho đoạn hiện tại</p>
         <p>l: Bắt đầu lặp lại các đoạn</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
+        <p>g: Reset lại các đoạn</p>
         <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
@@ -181,6 +182,16 @@ javascript:(function() {
         }, 1000);
     }
 
+    function resetSegments() {
+        isPaused = true;
+        video.pause();
+        segments = [];
+        currentSegmentIndex = -1;
+        currentLoop = 0;
+        looping = false;
+        updateInfo();
+    }
+
     video.addEventListener('timeupdate', loopVideo);
 
     function adjustTime(type, delta) {
@@ -230,10 +241,10 @@ javascript:(function() {
     function createButton(label, onClick) {
         const button = document.createElement('button');
         button.innerText = label;
-        button.style.margin = '2px';
-        button.style.padding = '5px';
-        button.style.width = '30px';
-        button.style.fontSize = '16px';
+        button.style.margin = '4px'; // Increased margin
+        button.style.padding = '10px'; // Increased padding
+        button.style.width = '60px'; // Increased width
+        button.style.fontSize = '32px'; // Increased font size
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
         button.style.color = 'white';
@@ -253,6 +264,7 @@ javascript:(function() {
             restartLoop();
         }
     });
+    createButton('g', resetSegments);
     createButton('b', () => {
         segments.push({start: video.currentTime - 0.15, end: video.currentTime});
         currentSegmentIndex = segments.length - 1;
@@ -324,6 +336,9 @@ javascript:(function() {
                 } else {
                     restartLoop();
                 }
+                break;
+            case 'g':
+                resetSegments();
                 break;
             case 'a':
                 adjustTime("start", -1);
