@@ -247,7 +247,7 @@
         button.style.fontSize = '32px'; // Increased font size
         button.style.cursor = 'pointer';
         button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-        button.style.color = 'white';
+        button.style.color = '#FFD700';
         button.style.border = '1px solid white';
         button.style.borderRadius = '5px';
         button.addEventListener('click', onClick);
