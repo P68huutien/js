@@ -2,7 +2,6 @@
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
-    let loopCount = 50;
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
@@ -37,7 +36,7 @@
         panel.style.position = 'fixed';
         panel.style.top = top;
         panel.style.left = left;
-        panel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Adjusted transparency
+        panel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
         panel.style.color = 'white';
         panel.style.padding = '10px';
         panel.style.borderRadius = '5px';
@@ -99,17 +98,29 @@
         <p>l: Bắt đầu lặp lại các đoạn</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
         <p>g: Reset lại các đoạn</p>
-        <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
+        <p>j, k: Tăng/giảm số lần lặp lại của đoạn hiện tại</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
         <p>u, i: Tăng/giảm âm lượng</p>
         <p>o, p: Chuyển đến đoạn trước/sau</p>
+        <p>Delete: Xóa đoạn hiện tại</p>
+        <p>q: Nhảy tới đoạn được chỉ định</p>
+        <p>e: Xuất file phụ đề</p>
+        <p>r: Nhập file phụ đề</p>
     `;
     infoPanel.appendChild(keyHelpDiv);
 
+    function formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        const milliseconds = Math.floor((seconds % 1) * 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+    }
+
     function updateInfo() {
         let segmentsInfo = segments.map((seg, index) => 
-            `Đoạn ${index + 1}: ${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s`
+            `Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)} (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})`
         ).join('<br>');
 
         infoPanel.innerHTML = `
@@ -121,7 +132,7 @@
             <p>Các đoạn đã chọn:</p>
             ${segmentsInfo}
             <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-            <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
+            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || 0}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
         infoPanel.appendChild(keyHelpDiv);
@@ -139,9 +150,10 @@
                 const pauseDuration = segmentDuration * 2;
                 countdownTime = pauseDuration;
                 startCountdown();
-                if (currentLoop < loopCount) {
+                if (currentLoop < currentSegment.loopCount) {
                     setTimeout(() => {
                         video.currentTime = currentSegment.start;
+                        video.playbackRate = currentSegment.playbackRate;
                         isPaused = false;
                         video.play();
                     }, pauseDuration * 1000);
@@ -150,6 +162,7 @@
                     currentSegmentIndex = (currentSegmentIndex + 1) % segments.length;
                     setTimeout(() => {
                         video.currentTime = segments[currentSegmentIndex].start;
+                        video.playbackRate = segments[currentSegmentIndex].playbackRate;
                         isPaused = false;
                         video.play();
                     }, pauseDuration * 1000);
@@ -177,6 +190,7 @@
         updateInfo();
         setTimeout(() => {
             video.currentTime = segments[currentSegmentIndex].start;
+            video.playbackRate = segments[currentSegmentIndex].playbackRate;
             isPaused = false;
             video.play();
         }, 1000);
@@ -209,205 +223,179 @@
         }
     }
 
-    function adjustPlaybackRate(delta) {
-        video.playbackRate = Math.max(0.1, video.playbackRate * (1 + delta / 100));
-        updateInfo();
-    }
-
-    function adjustVolume(delta) {
-        video.volume = Math.min(1, Math.max(0, video.volume + delta));
-        updateInfo();
-    }
-
-    function toggleInfoDiv() {
-        isHidden = !isHidden;
-        keyHelpDiv.style.display = isHidden ? 'none' : 'block';
-    }
-
-    function adjustFontSize(delta) {
-        fontSize = Math.max(10, fontSize + delta);
-        infoPanel.style.fontSize = `${fontSize}px`;
-        buttonPanel.style.fontSize = `${fontSize}px`;
-    }
-
-    function changeSegment(delta) {
-        if (segments.length === 0) return;
-        currentSegmentIndex = (currentSegmentIndex + delta + segments.length) % segments.length;
-        currentLoop = 0;
-        video.currentTime = segments[currentSegmentIndex].start;
-        updateInfo();
-    }
-
-    function createButton(label, onClick) {
-        const button = document.createElement('button');
-        button.innerText = label;
-        button.style.margin = '4px'; // Increased margin
-        button.style.padding = '10px'; // Increased padding
-        button.style.width = '60px'; // Increased width
-        button.style.fontSize = '32px'; // Increased font size
-        button.style.cursor = 'pointer';
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-        button.style.color = '#FFD700';
-        button.style.border = '1px solid white';
-        button.style.borderRadius = '5px';
-        button.addEventListener('click', onClick);
-        buttonPanel.appendChild(button);
-    }
-
-    createButton('h', () => {
-        hKeyPressCount++;
-        looping = hKeyPressCount % 2 === 0;
-        updateInfo();
-        if (!looping) {
-            clearInterval(countdownInterval);
-        } else {
-            restartLoop();
-        }
-    });
-    createButton('g', resetSegments);
-    createButton('b', () => {
-        segments.push({start: video.currentTime - 0.15, end: video.currentTime});
-        currentSegmentIndex = segments.length - 1;
-        updateInfo();
-    });
-    createButton('n', () => {
-        if (segments.length > 0) {
-            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
-            updateInfo();
-        }
-    });
-    createButton('l', () => {
-        if (segments.length > 0) {
-            looping = true;
+    function jumpToSegment(index) {
+        if (index >= 0 && index < segments.length) {
+            isPaused = true;
+            video.pause();
+            currentSegmentIndex = index;
             currentLoop = 0;
-            currentSegmentIndex = 0;
             updateInfo();
-            restartLoop();
+            setTimeout(() => {
+                video.currentTime = segments[currentSegmentIndex].start;
+                video.playbackRate = segments[currentSegmentIndex].playbackRate;
+                isPaused = false;
+                video.play();
+            }, 1000);
         }
-    });
-    createButton('a', () => adjustTime("start", -1));
-    createButton('s', () => adjustTime("start", 1));
-    createButton('d', () => adjustTime("end", -1));
-    createButton('f', () => adjustTime("end", 1));
-    createButton('z', () => adjustTime("start", -0.1));
-    createButton('x', () => adjustTime("start", 0.1));
-    createButton('c', () => adjustTime("end", -0.1));
-    createButton('v', () => adjustTime("end", 0.1));
-    createButton('1', () => adjustPlaybackRate(-1));
-    createButton('2', () => adjustPlaybackRate(-2));
-    createButton('3', () => adjustPlaybackRate(-3));
-    createButton('4', () => adjustPlaybackRate(1));
-    createButton('5', () => adjustPlaybackRate(2));
-    createButton('6', () => adjustPlaybackRate(3));
-    createButton('m', () => toggleInfoDiv());
-    createButton('u', () => adjustVolume(0.01));
-    createButton('i', () => adjustVolume(-0.01));
-    createButton('o', () => changeSegment(-1));
-    createButton('p', () => changeSegment(1));
+    }
 
-    document.addEventListener('keydown', (event) => {
-        switch (event.key) {
-            case 'b':
-                segments.push({start: video.currentTime - 0.15, end: video.currentTime});
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'a') {
+            adjustTime("start", -1);
+        } else if (event.key === 's') {
+            adjustTime("start", 1);
+        } else if (event.key === 'd') {
+            adjustTime("end", -1);
+        } else if (event.key === 'f') {
+            adjustTime("end", 1);
+        } else if (event.key === 'z') {
+            adjustTime("start", -0.1);
+        } else if (event.key === 'x') {
+            adjustTime("start", 0.1);
+        } else if (event.key === 'c') {
+            adjustTime("end", -0.1);
+        } else if (event.key === 'v') {
+            adjustTime("end", 0.1);
+        } else if (event.key === 'b') {
+            if (segments.length === 0 || segments[currentSegmentIndex]?.end) {
+                segments.push({ start: video.currentTime, end: null, loopCount: 5, playbackRate: video.playbackRate });
                 currentSegmentIndex = segments.length - 1;
+            } else {
+                segments[currentSegmentIndex].start = video.currentTime;
+            }
+            updateInfo();
+        } else if (event.key === 'n') {
+            if (currentSegmentIndex !== -1 && !segments[currentSegmentIndex].end) {
+                segments[currentSegmentIndex].end = video.currentTime;
                 updateInfo();
-                break;
-            case 'n':
-                if (segments.length > 0) {
-                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
-                    updateInfo();
-                }
-                break;
-            case 'l':
-                if (segments.length > 0) {
-                    looping = true;
-                    currentLoop = 0;
-                    currentSegmentIndex = 0;
-                    updateInfo();
-                    restartLoop();
-                }
-                break;
-            case 'h':
-                hKeyPressCount++;
-                looping = hKeyPressCount % 2 === 0;
+            }
+        } else if (event.key === 'l') {
+            if (segments.length > 0 && !looping) {
+                looping = true;
+                currentSegmentIndex = 0;
+                currentLoop = 0;
                 updateInfo();
-                if (!looping) {
-                    clearInterval(countdownInterval);
+                video.currentTime = segments[0].start;
+                video.playbackRate = segments[0].playbackRate;
+                video.play();
+            }
+        } else if (event.key === 'h') {
+            hKeyPressCount++;
+            if (hKeyPressCount === 1) {
+                alert('Bạn có chắc muốn hủy lặp lại? Nếu chắc chắn, nhấn phím H lần nữa.');
+                setTimeout(() => {
+                    hKeyPressCount = 0;
+                }, 5000);
+            } else if (hKeyPressCount === 2) {
+                looping = false;
+                restartLoop();
+                hKeyPressCount = 0;
+            }
+        } else if (event.key === 'g') {
+            resetSegments();
+        } else if (event.key === 'j') {
+            if (segments.length > 0) {
+                segments[currentSegmentIndex].loopCount = Math.max(1, segments[currentSegmentIndex].loopCount + 1);
+                updateInfo();
+            }
+        } else if (event.key === 'k') {
+            if (segments.length > 0) {
+                segments[currentSegmentIndex].loopCount = Math.max(1, segments[currentSegmentIndex].loopCount - 1);
+                updateInfo();
+            }
+        } else if (event.key === 'm') {
+            isHidden = !isHidden;
+            infoPanel.style.display = isHidden ? 'none' : 'block';
+        } else if (event.key === 'u') {
+            video.volume = Math.min(1, video.volume + 0.1);
+            updateInfo();
+        } else if (event.key === 'i') {
+            video.volume = Math.max(0, video.volume - 0.1);
+            updateInfo();
+        } else if (event.key === 'o') {
+            if (currentSegmentIndex > 0) {
+                jumpToSegment(currentSegmentIndex - 1);
+            }
+        } else if (event.key === 'p') {
+            if (currentSegmentIndex < segments.length - 1) {
+                jumpToSegment(currentSegmentIndex + 1);
+            }
+        } else if (event.key === 'Delete') {
+            if (currentSegmentIndex !== -1) {
+                segments.splice(currentSegmentIndex, 1);
+                if (currentSegmentIndex >= segments.length) {
+                    currentSegmentIndex = segments.length - 1;
+                }
+                updateInfo();
+            }
+        } else if (event.key === '+') {
+            fontSize++;
+            infoPanel.style.fontSize = `${fontSize}px`;
+            updateInfo();
+        } else if (event.key === '-') {
+            fontSize = Math.max(8, fontSize - 1);
+            infoPanel.style.fontSize = `${fontSize}px`;
+            updateInfo();
+        } else if (event.key === 'q') {
+            let segmentNumber = prompt("Nhập số thứ tự của đoạn:");
+            if (segmentNumber !== null) {
+                segmentNumber = parseInt(segmentNumber, 10) - 1;
+                if (segmentNumber >= 0 && segmentNumber < segments.length) {
+                    jumpToSegment(segmentNumber);
                 } else {
-                    restartLoop();
+                    alert('Số đoạn không hợp lệ.');
                 }
-                break;
-            case 'g':
-                resetSegments();
-                break;
-            case 'a':
-                adjustTime("start", -1);
-                break;
-            case 's':
-                adjustTime("start", 1);
-                break;
-            case 'd':
-                adjustTime("end", -1);
-                break;
-            case 'f':
-                adjustTime("end", 1);
-                break;
-            case 'z':
-                adjustTime("start", -0.1);
-                break;
-            case 'x':
-                adjustTime("start", 0.1);
-                break;
-            case 'c':
-                adjustTime("end", -0.1);
-                break;
-            case 'v':
-                adjustTime("end", 0.1);
-                break;
-            case '1':
-                adjustPlaybackRate(-1);
-                break;
-            case '2':
-                adjustPlaybackRate(-2);
-                break;
-            case '3':
-                adjustPlaybackRate(-3);
-                break;
-            case '4':
-                adjustPlaybackRate(1);
-                break;
-            case '5':
-                adjustPlaybackRate(2);
-                break;
-            case '6':
-                adjustPlaybackRate(3);
-                break;
-            case 'm':
-                toggleInfoDiv();
-                break;
-            case '+':
-                adjustFontSize(1);
-                break;
-            case '-':
-                adjustFontSize(-1);
-                break;
-            case 'u':
-                adjustVolume(0.01);
-                break;
-            case 'i':
-                adjustVolume(-0.01);
-                break;
-            case 'o':
-                changeSegment(-1);
-                break;
-            case 'p':
-                changeSegment(1);
-                break;
-            default:
-                break;
+            }
+        } else if (event.key === 'e') {
+            const subtitles = segments.map((seg, index) => {
+                return `${index + 1}\n${formatTime(seg.start)} --> ${formatTime(seg.end)}\nLoop Count: ${seg.loopCount}, Playback Rate: ${seg.playbackRate.toFixed(2)}\n`;
+            }).join('\n');
+            const blob = new Blob([subtitles], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'subtitles.srt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else if (event.key === 'r') {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.srt';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const contents = e.target.result;
+                    const segments = contents.split('\n\n').map(segment => {
+                        const lines = segment.split('\n');
+                        const index = parseInt(lines[0], 10);
+                        const times = lines[1].split(' --> ');
+                        const start = parseSRTTime(times[0]);
+                        const end = parseSRTTime(times[1]);
+                        const loopCount = parseInt(lines[2].split(': ')[1], 10);
+                        const playbackRate = parseFloat(lines[3].split(': ')[1]);
+                        return { start, end, loopCount, playbackRate };
+                    });
+                    this.segments = segments;
+                    updateInfo();
+                }.bind(this);
+                reader.readAsText(file);
+            }.bind(this);
+            input.click();
         }
     });
+
+    function parseSRTTime(srtTime) {
+        const parts = srtTime.split(':');
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        const secondsParts = parts[2].split(',');
+        const seconds = parseInt(secondsParts[0], 10);
+        const milliseconds = parseInt(secondsParts[1], 10);
+        return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+    }
 
     updateInfo();
-    console.clear();
 })();
