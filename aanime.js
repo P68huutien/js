@@ -2,6 +2,7 @@
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
+    let loopCount = 50;
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
@@ -98,7 +99,7 @@
         <p>l: Bắt đầu lặp lại các đoạn</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
         <p>g: Reset lại các đoạn</p>
-        <p>j, k: Tăng/giảm số lần lặp lại của đoạn hiện tại</p>
+        <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
         <p>u, i: Tăng/giảm âm lượng</p>
@@ -120,7 +121,7 @@
 
     function updateInfo() {
         let segmentsInfo = segments.map((seg, index) => 
-            `Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)} (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})`
+            `Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)} (Tốc độ: ${seg.playbackRate.toFixed(2)})`
         ).join('<br>');
 
         infoPanel.innerHTML = `
@@ -132,7 +133,7 @@
             <p>Các đoạn đã chọn:</p>
             ${segmentsInfo}
             <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || 0}</p>
+            <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
         infoPanel.appendChild(keyHelpDiv);
@@ -146,15 +147,17 @@
                 video.pause();
                 currentLoop++;
                 updateInfo();
-                countdownTime = currentSegment.end - currentSegment.start;
+                const segmentDuration = currentSegment.end - currentSegment.start;
+                const pauseDuration = segmentDuration * 2;
+                countdownTime = pauseDuration;
                 startCountdown();
-                if (currentLoop < currentSegment.loopCount) {
+                if (currentLoop < loopCount) {
                     setTimeout(() => {
                         video.currentTime = currentSegment.start;
                         video.playbackRate = currentSegment.playbackRate;
                         isPaused = false;
                         video.play();
-                    }, countdownTime * 1000);
+                    }, pauseDuration * 1000);
                 } else {
                     currentLoop = 0;
                     currentSegmentIndex = (currentSegmentIndex + 1) % segments.length;
@@ -163,7 +166,7 @@
                         video.playbackRate = segments[currentSegmentIndex].playbackRate;
                         isPaused = false;
                         video.play();
-                    }, countdownTime * 1000);
+                    }, pauseDuration * 1000);
                 }
             }
         }
@@ -221,179 +224,317 @@
         }
     }
 
-    function jumpToSegment(index) {
-        if (index >= 0 && index < segments.length) {
-            isPaused = true;
-            video.pause();
-            currentSegmentIndex = index;
-            currentLoop = 0;
-            updateInfo();
-            setTimeout(() => {
+    function adjustPlaybackRate(delta) {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        currentSegment.playbackRate = Math.max(0.1, currentSegment.playbackRate * (1 + delta / 100));
+        video.playbackRate = currentSegment.playbackRate;
+        updateInfo();
+    }
+
+    function adjustVolume(delta) {
+        video.volume = Math.min(1, Math.max(0, video.volume + delta));
+        updateInfo();
+    }
+
+    function toggleInfoDiv() {
+        isHidden = !isHidden;
+        keyHelpDiv.style.display = isHidden ? 'none' : 'block';
+    }
+
+    function adjustFontSize(delta) {
+        fontSize = Math.max(10, fontSize + delta);
+        infoPanel.style.fontSize = `${fontSize}px`;
+        buttonPanel.style.fontSize = `${fontSize}px`;
+    }
+
+    function changeSegment(delta) {
+        if (segments.length === 0) return;
+        currentSegmentIndex = (currentSegmentIndex + delta + segments.length) % segments.length;
+        currentLoop = 0;
+        video.currentTime = segments[currentSegmentIndex].start;
+        video.playbackRate = segments[currentSegmentIndex].playbackRate;
+        updateInfo();
+    }
+
+    function deleteCurrentSegment() {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        segments.splice(currentSegmentIndex, 1);
+        if (segments.length === 0) {
+            currentSegmentIndex = -1;
+        } else {
+            currentSegmentIndex = Math.min(currentSegmentIndex, segments.length - 1);
+        }
+        updateInfo();
+    }
+
+    function jumpToSegment() {
+        const segmentNumber = prompt("Enter the segment number to jump to:");
+        if (segmentNumber !== null) {
+            const index = parseInt(segmentNumber) - 1;
+            if (index >= 0 && index < segments.length) {
+                currentSegmentIndex = index;
                 video.currentTime = segments[currentSegmentIndex].start;
                 video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                isPaused = false;
-                video.play();
-            }, 1000);
+                updateInfo();
+            } else {
+                alert("Invalid segment number");
+            }
         }
     }
 
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'a') {
-            adjustTime("start", -1);
-        } else if (event.key === 's') {
-            adjustTime("start", 1);
-        } else if (event.key === 'd') {
-            adjustTime("end", -1);
-        } else if (event.key === 'f') {
-            adjustTime("end", 1);
-        } else if (event.key === 'z') {
-            adjustTime("start", -0.1);
-        } else if (event.key === 'x') {
-            adjustTime("start", 0.1);
-        } else if (event.key === 'c') {
-            adjustTime("end", -0.1);
-        } else if (event.key === 'v') {
-            adjustTime("end", 0.1);
-        } else if (event.key === 'b') {
-            if (segments.length === 0 || segments[currentSegmentIndex]?.end) {
-                segments.push({ start: video.currentTime, end: null, loopCount: 4, playbackRate: video.playbackRate });
-                currentSegmentIndex = segments.length - 1;
-            } else {
-                segments[currentSegmentIndex].start = video.currentTime;
-            }
-            updateInfo();
-        } else if (event.key === 'n') {
-            if (currentSegmentIndex !== -1 && !segments[currentSegmentIndex].end) {
-                segments[currentSegmentIndex].end = video.currentTime;
-                updateInfo();
-            }
-        } else if (event.key === 'l') {
-            if (segments.length > 0 && !looping) {
-                looping = true;
-                currentSegmentIndex = 0;
-                currentLoop = 0;
-                updateInfo();
-                video.currentTime = segments[0].start;
-                video.playbackRate = segments[0].playbackRate;
-                video.play();
-            }
-        } else if (event.key === 'h') {
-            hKeyPressCount++;
-            if (hKeyPressCount === 1) {
-                alert('Bạn có chắc muốn hủy lặp lại? Nếu chắc chắn, nhấn phím H lần nữa.');
-                setTimeout(() => {
-                    hKeyPressCount = 0;
-                }, 5000);
-            } else if (hKeyPressCount === 2) {
-                looping = false;
-                restartLoop();
-                hKeyPressCount = 0;
-            }
-        } else if (event.key === 'g') {
-            resetSegments();
-        } else if (event.key === 'j') {
-            if (segments.length > 0) {
-                segments[currentSegmentIndex].loopCount = Math.max(1, segments[currentSegmentIndex].loopCount + 1);
-                updateInfo();
-            }
-        } else if (event.key === 'k') {
-            if (segments.length > 0) {
-                segments[currentSegmentIndex].loopCount = Math.max(1, segments[currentSegmentIndex].loopCount - 1);
-                updateInfo();
-            }
-        } else if (event.key === 'm') {
-            isHidden = !isHidden;
-            infoPanel.style.display = isHidden ? 'none' : 'block';
-        } else if (event.key === 'u') {
-            video.volume = Math.min(1, video.volume + 0.1);
-            updateInfo();
-        } else if (event.key === 'i') {
-            video.volume = Math.max(0, video.volume - 0.1);
-            updateInfo();
-        } else if (event.key === 'o') {
-            if (currentSegmentIndex > 0) {
-                jumpToSegment(currentSegmentIndex - 1);
-            }
-        } else if (event.key === 'p') {
-            if (currentSegmentIndex < segments.length - 1) {
-                jumpToSegment(currentSegmentIndex + 1);
-            }
-        } else if (event.key === 'Delete') {
-            if (currentSegmentIndex !== -1) {
-                segments.splice(currentSegmentIndex, 1);
-                if (currentSegmentIndex >= segments.length) {
-                    currentSegmentIndex = segments.length - 1;
-                }
-                updateInfo();
-            }
-        } else if (event.key === '+') {
-            fontSize++;
-            infoPanel.style.fontSize = `${fontSize}px`;
-            updateInfo();
-        } else if (event.key === '-') {
-            fontSize = Math.max(8, fontSize - 1);
-            infoPanel.style.fontSize = `${fontSize}px`;
-            updateInfo();
-        } else if (event.key === 'q') {
-            let segmentNumber = prompt("Nhập số thứ tự của đoạn:");
-            if (segmentNumber !== null) {
-                segmentNumber = parseInt(segmentNumber, 10) - 1;
-                if (segmentNumber >= 0 && segmentNumber < segments.length) {
-                    jumpToSegment(segmentNumber);
-                } else {
-                    alert('Số đoạn không hợp lệ.');
-                }
-            }
-        } else if (event.key === 'e') {
-            const subtitles = segments.map((seg, index) => {
-                return `${index + 1}\n${formatTime(seg.start)} --> ${formatTime(seg.end)}\nLoop Count: ${seg.loopCount}, Playback Rate: ${seg.playbackRate.toFixed(2)}\n`;
-            }).join('\n');
-            const blob = new Blob([subtitles], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'subtitles.srt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } else if (event.key === 'r') {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.srt';
-            input.onchange = function(event) {
-                const file = event.target.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const contents = e.target.result;
-                    const segments = contents.split('\n\n').map(segment => {
-                        const lines = segment.split('\n');
-                        const index = parseInt(lines[0], 10);
-                        const times = lines[1].split(' --> ');
-                        const start = parseSRTTime(times[0]);
-                        const end = parseSRTTime(times[1]);
-                        const loopCount = parseInt(lines[2].split(': ')[1], 10);
-                        const playbackRate = parseFloat(lines[3].split(': ')[1]);
-                        return { start, end, loopCount, playbackRate };
-                    });
-                    this.segments = segments;
+    function exportSubtitles() {
+        let srtContent = "";
+        segments.forEach((segment, index) => {
+            srtContent += `${index + 1}\n`;
+            srtContent += `${formatTime(segment.start)} --> ${formatTime(segment.end)}\n`;
+            srtContent += `Segment ${index + 1}\n\n`;
+        });
+
+        const blob = new Blob([srtContent], {type: "text/plain;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "subtitles.srt";
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importSubtitles() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.srt';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            reader.onload = readerEvent => {
+                const content = readerEvent.target.result;
+                const parsedSegments = parseSRT(content);
+                if (parsedSegments.length > 0) {
+                    segments = parsedSegments;
+                    currentSegmentIndex = 0;
                     updateInfo();
-                }.bind(this);
-                reader.readAsText(file);
-            }.bind(this);
-            input.click();
+                    alert("Subtitles imported successfully!");
+                } else {
+                    alert("Failed to import subtitles. Please check the file format.");
+                }
+            }
+        }
+        input.click();
+    }
+
+    function parseSRT(content) {
+        const lines = content.trim().split('\n');
+        const parsedSegments = [];
+        let currentSegment = {};
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line === '') continue;
+
+            if (line.includes('-->')) {
+                const [start, end] = line.split('-->').map(timeStr => {
+                    const [h, m, s] = timeStr.trim().split(':');
+                    return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s);
+                });
+                currentSegment.start = start;
+                currentSegment.end = end;
+                currentSegment.playbackRate = 0.8; // Default playback rate
+                parsedSegments.push(currentSegment);
+                currentSegment = {};
+            }
+        }
+
+        return parsedSegments;
+    }
+
+    function createButton(label, onClick) {
+        const button = document.createElement('button');
+        button.innerText = label;
+        button.style.margin = '4px';
+        button.style.padding = '10px';
+        button.style.width = '60px';
+        button.style.fontSize = '32px';
+        button.style.cursor = 'pointer';
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+        button.style.color = '#FFD700';
+        button.style.border = '1px solid white';
+        button.style.borderRadius = '5px';
+        button.addEventListener('click', onClick);
+        buttonPanel.appendChild(button);
+    }
+
+    createButton('h', () => {
+        hKeyPressCount++;
+        looping = hKeyPressCount % 2 === 0;
+        updateInfo();
+        if (!looping) {
+            clearInterval(countdownInterval);
+        } else {
+            restartLoop();
+        }
+    });
+    createButton('g', resetSegments);
+    createButton('b', () => {
+        segments.push({start: video.currentTime - 0.15, end: video.currentTime, playbackRate: video.playbackRate});
+        currentSegmentIndex = segments.length - 1;
+        updateInfo();
+    });
+    createButton('n', () => {
+        if (segments.length > 0) {
+            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+            updateInfo();
+        }
+    });
+    createButton('l', () => {
+        if (segments.length > 0) {
+            looping = true;
+            currentLoop = 0;
+            currentSegmentIndex = 0;
+            updateInfo();
+            restartLoop();
+        }
+    });
+    createButton('a', () => adjustTime("start", -1));
+    createButton('s', () => adjustTime("start", 1));
+    createButton('d', () => adjustTime("end", -1));
+    createButton('f', () => adjustTime("end", 1));
+    createButton('z', () => adjustTime("start", -0.1));
+    createButton('x', () => adjustTime("start", 0.1));
+    createButton('c', () => adjustTime("end", -0.1));
+    createButton('v', () => adjustTime("end", 0.1));
+    createButton('1', () => adjustPlaybackRate(-1));
+    createButton('2', () => adjustPlaybackRate(-2));
+    createButton('3', () => adjustPlaybackRate(-3));
+    createButton('4', () => adjustPlaybackRate(1));
+    createButton('5', () => adjustPlaybackRate(2));
+    createButton('6', () => adjustPlaybackRate(3));
+    createButton('m', () => toggleInfoDiv());
+    createButton('u', () => adjustVolume(0.01));
+    createButton('i', () => adjustVolume(-0.01));
+    createButton('o', () => changeSegment(-1));
+    createButton('p', () => changeSegment(1));
+    createButton('Del', deleteCurrentSegment);
+    createButton('q', jumpToSegment);
+    createButton('e', exportSubtitles);
+    createButton('r', importSubtitles);
+
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 'b':
+                segments.push({start: video.currentTime - 0.15, end: video.currentTime, playbackRate: video.playbackRate});
+                currentSegmentIndex = segments.length - 1;
+                updateInfo();
+                break;
+            case 'n':
+                if (segments.length > 0) {
+                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+                    updateInfo();
+                }
+                break;
+            case 'l':
+                if (segments.length > 0) {
+                    looping = true;
+                    currentLoop = 0;
+                    currentSegmentIndex = 0;
+                    updateInfo();
+                    restartLoop();
+                }
+                break;
+            case 'h':
+                hKeyPressCount++;
+                looping = hKeyPressCount % 2 === 0;
+                updateInfo();
+                if (!looping) {
+                    clearInterval(countdownInterval);
+                } else {
+                    restartLoop();
+                }
+                break;
+            case 'g':
+                resetSegments();
+                break;
+            case 'a':
+                adjustTime("start", -1);
+                break;
+            case 's':
+                adjustTime("start", 1);
+                break;
+            case 'd':
+                adjustTime("end", -1);
+                break;
+            case 'f':
+                adjustTime("end", 1);
+                break;
+            case 'z':
+                adjustTime("start", -0.1);
+                break;
+            case 'x':
+                adjustTime("start", 0.1);
+                break;
+            case 'c':
+                adjustTime("end", -0.1);
+                break;
+            case 'v':
+                adjustTime("end", 0.1);
+                break;
+            case '1':
+                adjustPlaybackRate(-1);
+                break;
+            case '2':
+                adjustPlaybackRate(-2);
+                break;
+            case '3':
+                adjustPlaybackRate(-3);
+                break;
+            case '4':
+                adjustPlaybackRate(1);
+                break;
+            case '5':
+                adjustPlaybackRate(2);
+                break;
+            case '6':
+                adjustPlaybackRate(3);
+                break;
+            case 'm':
+                toggleInfoDiv();
+                break;
+            case '+':
+                adjustFontSize(1);
+                break;
+            case '-':
+                adjustFontSize(-1);
+                break;
+            case 'u':
+                adjustVolume(0.01);
+                break;
+            case 'i':
+                adjustVolume(-0.01);
+                break;
+            case 'o':
+                changeSegment(-1);
+                break;
+            case 'p':
+                changeSegment(1);
+                break;
+            case 'Delete':
+                deleteCurrentSegment();
+                break;
+            case 'q':
+                jumpToSegment();
+                break;
+            case 'e':
+                exportSubtitles();
+                break;
+            case 'r':
+                importSubtitles();
+                break;
+            default:
+                break;
         }
     });
 
-    function parseSRTTime(srtTime) {
-        const parts = srtTime.split(':');
-        const hours = parseInt(parts[0], 10);
-        const minutes = parseInt(parts[1], 10);
-        const secondsParts = parts[2].split(',');
-        const seconds = parseInt(secondsParts[0], 10);
-        const milliseconds = parseInt(secondsParts[1], 10);
-        return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
-    }
-
     updateInfo();
+    console.clear();
 })();
