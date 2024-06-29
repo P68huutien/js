@@ -99,7 +99,7 @@
         <p>l: Bắt đầu lặp lại các đoạn</p>
         <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
         <p>g: Reset lại các đoạn</p>
-        <p>j, k: Tăng/giảm số lần lặp lại, mặc định 50</p>
+        <p>j, k: Giảm/tăng số lần lặp lại của đoạn hiện tại</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
         <p>+, -: Tăng/giảm kích thước font chữ</p>
         <p>u, i: Tăng/giảm âm lượng</p>
@@ -108,6 +108,7 @@
         <p>q: Nhảy tới đoạn được chỉ định</p>
         <p>e: Xuất file phụ đề</p>
         <p>r: Nhập file phụ đề</p>
+        <p>y: Chia đoạn tại thời điểm hiện tại</p>
     `;
     infoPanel.appendChild(keyHelpDiv);
 
@@ -121,7 +122,7 @@
 
     function updateInfo() {
         let segmentsInfo = segments.map((seg, index) => 
-            `Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)} (Tốc độ: ${seg.playbackRate.toFixed(2)})`
+            `Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)} (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})`
         ).join('<br>');
 
         infoPanel.innerHTML = `
@@ -133,7 +134,7 @@
             <p>Các đoạn đã chọn:</p>
             ${segmentsInfo}
             <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-            <p>Lặp lại lần: ${currentLoop} / ${loopCount}</p>
+            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
             <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
         infoPanel.appendChild(keyHelpDiv);
@@ -151,7 +152,7 @@
                 const pauseDuration = segmentDuration * 1.2;
                 countdownTime = pauseDuration;
                 startCountdown();
-                if (currentLoop < loopCount) {
+                if (currentLoop < currentSegment.loopCount) {
                     setTimeout(() => {
                         video.currentTime = currentSegment.start;
                         video.playbackRate = currentSegment.playbackRate;
@@ -340,13 +341,37 @@
                 });
                 currentSegment.start = start;
                 currentSegment.end = end;
-                currentSegment.playbackRate = 0.8; // Default playback rate
+                currentSegment.playbackRate = 0.8;
+                currentSegment.loopCount = loopCount;
                 parsedSegments.push(currentSegment);
                 currentSegment = {};
             }
         }
 
         return parsedSegments;
+    }
+
+    function adjustSegmentLoopCount(delta) {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        currentSegment.loopCount = Math.max(1, currentSegment.loopCount + delta);
+        updateInfo();
+    }
+
+    function splitSegmentAtCurrentTime() {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        if (video.currentTime > currentSegment.start && video.currentTime < currentSegment.end) {
+            let newSegment = {
+                start: video.currentTime,
+                end: currentSegment.end,
+                playbackRate: currentSegment.playbackRate,
+                loopCount: currentSegment.loopCount
+            };
+            currentSegment.end = video.currentTime;
+            segments.splice(currentSegmentIndex + 1, 0, newSegment);
+            updateInfo();
+        }
     }
 
     function createButton(label, onClick) {
@@ -377,7 +402,12 @@
     });
     createButton('g', resetSegments);
     createButton('b', () => {
-        segments.push({start: video.currentTime - 0.15, end: video.currentTime, playbackRate: video.playbackRate});
+        segments.push({
+            start: video.currentTime - 0.15,
+            end: video.currentTime,
+            playbackRate: video.playbackRate,
+            loopCount: loopCount
+        });
         currentSegmentIndex = segments.length - 1;
         updateInfo();
     });
@@ -419,11 +449,19 @@
     createButton('q', jumpToSegment);
     createButton('e', exportSubtitles);
     createButton('r', importSubtitles);
+    createButton('j', () => adjustSegmentLoopCount(-1));
+    createButton('k', () => adjustSegmentLoopCount(1));
+    createButton('y', splitSegmentAtCurrentTime);
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
-                segments.push({start: video.currentTime - 0.15, end: video.currentTime, playbackRate: video.playbackRate});
+                segments.push({
+                    start: video.currentTime - 0.15,
+                    end: video.currentTime,
+                    playbackRate: video.playbackRate,
+                    loopCount: loopCount
+                });
                 currentSegmentIndex = segments.length - 1;
                 updateInfo();
                 break;
@@ -529,6 +567,15 @@
                 break;
             case 'r':
                 importSubtitles();
+                break;
+            case 'j':
+                adjustSegmentLoopCount(-1);
+                break;
+            case 'k':
+                adjustSegmentLoopCount(1);
+                break;
+            case 'y':
+                splitSegmentAtCurrentTime();
                 break;
             default:
                 break;
