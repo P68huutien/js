@@ -215,14 +215,16 @@
         let currentSegment = segments[currentSegmentIndex];
         if (type === "start") {
             currentSegment.start = Math.max(0, currentSegment.start + delta);
-            updateInfo();
+            if (currentSegment.start >= currentSegment.end) {
+                currentSegment.start = currentSegment.end - 0.1;
+            }
             if (video.currentTime < currentSegment.start) {
                 video.currentTime = currentSegment.start;
             }
         } else if (type === "end") {
             currentSegment.end = Math.max(currentSegment.start + 0.1, currentSegment.end + delta);
-            updateInfo();
         }
+        updateInfo();
     }
 
     function adjustPlaybackRate(delta) {
