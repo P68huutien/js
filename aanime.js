@@ -1,4 +1,10 @@
 (function() {
+    let mode = prompt("Chọn chế độ: \n1: Chạy 50 lần, thời gian chờ gấp đôi.\n2: Chạy 4 lần, thời gian chờ không gấp đôi.", "1");
+
+    // Set parameters based on the chosen mode
+    let defaultLoopCount = mode === "1" ? 50 : 4;
+    let doubleWaitTime = mode === "1";
+
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
@@ -146,9 +152,10 @@
                 video.pause();
                 currentLoop++;
                 updateInfo();
-                const segmentDuration = currentSegment.end - currentSegment.start;
-                const pauseDuration = segmentDuration * 2;
-                countdownTime = pauseDuration;
+                countdownTime = currentSegment.end - currentSegment.start;
+                if (doubleWaitTime) {
+                    countdownTime *= 2;
+                }
                 startCountdown();
                 if (currentLoop < currentSegment.loopCount) {
                     setTimeout(() => {
@@ -156,7 +163,7 @@
                         video.playbackRate = currentSegment.playbackRate;
                         isPaused = false;
                         video.play();
-                    }, pauseDuration * 1000);
+                    }, countdownTime * 1000);
                 } else {
                     currentLoop = 0;
                     currentSegmentIndex = (currentSegmentIndex + 1) % segments.length;
@@ -165,7 +172,7 @@
                         video.playbackRate = segments[currentSegmentIndex].playbackRate;
                         isPaused = false;
                         video.play();
-                    }, pauseDuration * 1000);
+                    }, countdownTime * 1000);
                 }
             }
         }
@@ -206,19 +213,9 @@
         updateInfo();
     }
 
-    video.addEventListener('timeupdate', loopVideo);
-
-    function adjustTime(type, delta) {
-        if (segments.length === 0 || currentSegmentIndex === -1) return;
-        let currentSegment = segments[currentSegmentIndex];
-        if (type === "start") {
-            currentSegment.start = Math.max(0, currentSegment.start + delta);
-            updateInfo();
-            if (video.currentTime < currentSegment.start) {
-                video.currentTime = currentSegment.start;
-            }
-        } else if (type === "end") {
-            currentSegment.end = Math.max(currentSegment.start + 0.1, currentSegment.end + delta);
+    function adjustTime(type, amount) {
+        if (currentSegmentIndex !== -1) {
+            segments[currentSegmentIndex][type] += amount;
             updateInfo();
         }
     }
@@ -258,7 +255,7 @@
             adjustTime("end", 0.1);
         } else if (event.key === 'b') {
             if (segments.length === 0 || segments[currentSegmentIndex]?.end) {
-                segments.push({ start: video.currentTime, end: null, loopCount: 5, playbackRate: video.playbackRate });
+                segments.push({ start: video.currentTime, end: null, loopCount: defaultLoopCount, playbackRate: video.playbackRate });
                 currentSegmentIndex = segments.length - 1;
             } else {
                 segments[currentSegmentIndex].start = video.currentTime;
