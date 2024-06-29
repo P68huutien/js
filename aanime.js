@@ -2,11 +2,11 @@
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
-    let loopCount = 50;
+    let loopCount = 3;
     let currentLoop = 0;
     let isPaused = false;
     let isHidden = false;
-    let fontSize = 14;
+    let fontSize = 12;
     let countdownTime = 0;
     let countdownInterval;
     let hKeyPressCount = 0;
@@ -30,7 +30,7 @@
     }
 
     video.volume = 0.5;
-    video.playbackRate = 0.8;
+    video.playbackRate = 0.7;
 
     function createPanel(top, left) {
         const panel = document.createElement('div');
@@ -148,7 +148,7 @@
                 currentLoop++;
                 updateInfo();
                 const segmentDuration = currentSegment.end - currentSegment.start;
-                const pauseDuration = segmentDuration * 2;
+                const pauseDuration = segmentDuration * 1.2;
                 countdownTime = pauseDuration;
                 startCountdown();
                 if (currentLoop < loopCount) {
