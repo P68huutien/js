@@ -56,6 +56,11 @@
     buttonPanel.style.width = 'auto';
     container.appendChild(buttonPanel);
 
+    // Tạo bảng thông tin riêng cho đoạn hiện tại, lặp lại lần, và thời gian chờ
+    const currentInfoPanel = createPanel('10px', '600px');
+    currentInfoPanel.style.width = '250px';
+    container.appendChild(currentInfoPanel);
+
     function makeDraggable(element) {
         let isDragging = false;
         let dragStartX, dragStartY, initialLeft, initialTop;
@@ -80,10 +85,33 @@
         document.addEventListener('mouseup', function() {
             isDragging = false;
         });
+
+        // Thêm hỗ trợ cho cảm ứng
+        element.addEventListener('touchstart', function(e) {
+            isDragging = true;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            initialLeft = parseInt(element.style.left, 10);
+            initialTop = parseInt(element.style.top, 10);
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            if (isDragging) {
+                let deltaX = e.touches[0].clientX - dragStartX;
+                let deltaY = e.touches[0].clientY - dragStartY;
+                element.style.left = `${initialLeft + deltaX}px`;
+                element.style.top = `${initialTop + deltaY}px`;
+            }
+        });
+
+        document.addEventListener('touchend', function() {
+            isDragging = false;
+        });
     }
 
     makeDraggable(infoPanel);
     makeDraggable(buttonPanel);
+    makeDraggable(currentInfoPanel);
 
     const keyHelpDiv = document.createElement('div');
     keyHelpDiv.innerHTML = `
@@ -96,8 +124,8 @@
         <p>c, v: Điều chỉnh điểm kết thúc (-0.1s, +0.1s)</p>
         <p>b: Đặt điểm bắt đầu tại thời điểm hiện tại</p>
         <p>n: Đặt điểm kết thúc cho đoạn hiện tại</p>
-        <p>l: Bắt đầu lặp lại các đoạn</p>
-        <p>h: Hủy quá trình lặp lại / Bắt đầu lại</p>
+        <p>Enter: Bắt đầu lặp lại các đoạn</p>
+        <p>h: Dừng quá trình lặp lại</p>
         <p>g: Reset lại các đoạn</p>
         <p>j, k: Giảm/tăng số lần lặp lại của đoạn hiện tại</p>
         <p>m: Ẩn/hiện bảng điều khiển</p>
@@ -133,11 +161,15 @@
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
             <p>Các đoạn đã chọn:</p>
             ${segmentsInfo}
-            <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
-            <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>                   
         `;
         infoPanel.appendChild(keyHelpDiv);
+
+        // Cập nhật thông tin trong currentInfoPanel
+        currentInfoPanel.innerHTML = `
+            <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
+            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
+            <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
+        `;
     }
 
     function loopVideo() {
@@ -249,6 +281,7 @@
         fontSize = Math.max(10, fontSize + delta);
         infoPanel.style.fontSize = `${fontSize}px`;
         buttonPanel.style.fontSize = `${fontSize}px`;
+        currentInfoPanel.style.fontSize = `${fontSize}px`;
     }
 
     function changeSegment(delta) {
@@ -393,14 +426,11 @@
     }
 
     createButton('h', () => {
-        hKeyPressCount++;
-        looping = hKeyPressCount % 2 === 0;
+        looping = false;
+        isPaused = true;
+        video.pause();
+        clearInterval(countdownInterval);
         updateInfo();
-        if (!looping) {
-            clearInterval(countdownInterval);
-        } else {
-            restartLoop();
-        }
     });
     createButton('g', resetSegments);
     createButton('b', () => {
@@ -419,7 +449,7 @@
             updateInfo();
         }
     });
-    createButton('l', () => {
+    createButton('Enter', () => {
         if (segments.length > 0) {
             looping = true;
             currentLoop = 0;
@@ -473,7 +503,7 @@
                     updateInfo();
                 }
                 break;
-            case 'l':
+            case 'Enter':
                 if (segments.length > 0) {
                     looping = true;
                     currentLoop = 0;
@@ -483,14 +513,11 @@
                 }
                 break;
             case 'h':
-                hKeyPressCount++;
-                looping = hKeyPressCount % 2 === 0;
+                looping = false;
+                isPaused = true;
+                video.pause();
+                clearInterval(countdownInterval);
                 updateInfo();
-                if (!looping) {
-                    clearInterval(countdownInterval);
-                } else {
-                    restartLoop();
-                }
                 break;
             case 'g':
                 resetSegments();
