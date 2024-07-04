@@ -30,7 +30,7 @@
     }
 
     video.volume = 0.5;
-    video.playbackRate = 0.7;
+    video.playbackRate = 0.5;
 
     function createPanel(top, left) {
         const panel = document.createElement('div');
@@ -344,8 +344,7 @@
         link.click();
         URL.revokeObjectURL(url);
     }
-
-    function importSubtitles() {
+function importSubtitles() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.srt';
@@ -386,7 +385,7 @@
                 });
                 currentSegment.start = start;
                 currentSegment.end = end;
-                currentSegment.playbackRate = 0.8;
+                currentSegment.playbackRate = 0.5;  // Tốc độ mặc định 50%
                 currentSegment.loopCount = loopCount;
                 parsedSegments.push(currentSegment);
                 currentSegment = {};
@@ -419,81 +418,105 @@
         }
     }
 
-    function createButton(label, onClick) {
-        const button = document.createElement('button');
-        button.innerText = label;
-        button.style.margin = '4px';
-        button.style.padding = '10px';
-        button.style.width = '60px';
-        button.style.fontSize = '32px';
-        button.style.cursor = 'pointer';
+    function createButton(label, onClick, tooltip) {
+    const button = document.createElement('button');
+    button.innerText = label;
+    button.style.margin = '4px';
+    button.style.padding = '10px';
+    button.style.width = '60px';
+    button.style.fontSize = '32px';
+    button.style.cursor = 'pointer';
+    button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+    button.style.color = '#FFD700';
+    button.style.border = '1px solid white';
+    button.style.borderRadius = '5px';
+    button.addEventListener('click', onClick);
+    
+    // Thêm tooltip
+    button.title = tooltip;
+    
+    // Thêm hiệu ứng khi hover
+    button.addEventListener('mouseover', () => {
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    });
+    button.addEventListener('mouseout', () => {
         button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-        button.style.color = '#FFD700';
-        button.style.border = '1px solid white';
-        button.style.borderRadius = '5px';
-        button.addEventListener('click', onClick);
-        buttonPanel.appendChild(button);
-    }
+    });
+    
+    // Thêm hiệu ứng khi nhấn giữ
+    button.addEventListener('mousedown', () => {
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+    });
+    button.addEventListener('mouseup', () => {
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    });
+    
+    buttonPanel.appendChild(button);
+}
+createButton('h', () => {
+    looping = false;
+    isPaused = true;
+    video.pause();
+    clearInterval(countdownInterval);
+    updateInfo();
+}, 'Dừng quá trình lặp lại');
 
-    createButton('h', () => {
-        looping = false;
-        isPaused = true;
-        video.pause();
-        clearInterval(countdownInterval);
+createButton('g', resetSegments, 'Reset lại các đoạn');
+
+createButton('b', () => {
+    segments.push({
+        start: video.currentTime - 0.15,
+        end: video.currentTime,
+        playbackRate: 0.5,
+        loopCount: loopCount
+    });
+    currentSegmentIndex = segments.length - 1;
+    updateInfo();
+}, 'Đặt điểm bắt đầu tại thời điểm hiện tại');
+
+createButton('n', () => {
+    if (segments.length > 0) {
+        segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
         updateInfo();
-    });
-    createButton('g', resetSegments);
-    createButton('b', () => {
-        segments.push({
-            start: video.currentTime - 0.15,
-            end: video.currentTime,
-            playbackRate: video.playbackRate,
-            loopCount: loopCount
-        });
-        currentSegmentIndex = segments.length - 1;
+    }
+}, 'Đặt điểm kết thúc cho đoạn hiện tại');
+
+createButton('Enter', () => {
+    if (segments.length > 0) {
+        looping = true;
+        currentLoop = 0;
+        currentSegmentIndex = 0;
         updateInfo();
-    });
-    createButton('n', () => {
-        if (segments.length > 0) {
-            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
-            updateInfo();
-        }
-    });
-    createButton('Enter', () => {
-        if (segments.length > 0) {
-            looping = true;
-            currentLoop = 0;
-            currentSegmentIndex = 0;
-            updateInfo();
-            restartLoop();
-        }
-    });
-    createButton('a', () => adjustTime("start", -1));
-    createButton('s', () => adjustTime("start", 1));
-    createButton('d', () => adjustTime("end", -1));
-    createButton('f', () => adjustTime("end", 1));
-    createButton('z', () => adjustTime("start", -0.1));
-    createButton('x', () => adjustTime("start", 0.1));
-    createButton('c', () => adjustTime("end", -0.1));
-    createButton('v', () => adjustTime("end", 0.1));
-    createButton('1', () => adjustPlaybackRate(-1));
-    createButton('2', () => adjustPlaybackRate(-2));
-    createButton('3', () => adjustPlaybackRate(-3));
-    createButton('4', () => adjustPlaybackRate(1));
-    createButton('5', () => adjustPlaybackRate(2));
-    createButton('6', () => adjustPlaybackRate(3));
-    createButton('m', () => toggleInfoDiv());
-    createButton('u', () => adjustVolume(0.01));
-    createButton('i', () => adjustVolume(-0.01));
-    createButton('o', () => changeSegment(-1));
-    createButton('p', () => changeSegment(1));
-    createButton('Del', deleteCurrentSegment);
-    createButton('q', jumpToSegment);
-    createButton('e', exportSubtitles);
-    createButton('r', importSubtitles);
-    createButton('j', () => adjustSegmentLoopCount(-1));
-    createButton('k', () => adjustSegmentLoopCount(1));
-    createButton('y', splitSegmentAtCurrentTime);
+        restartLoop();
+    }
+}, 'Bắt đầu lặp lại các đoạn');
+
+createButton('a', () => adjustTime("start", -1), 'Giảm điểm bắt đầu 1s');
+createButton('s', () => adjustTime("start", 1), 'Tăng điểm bắt đầu 1s');
+createButton('d', () => adjustTime("end", -1), 'Giảm điểm kết thúc 1s');
+createButton('f', () => adjustTime("end", 1), 'Tăng điểm kết thúc 1s');
+createButton('z', () => adjustTime("start", -0.1), 'Giảm điểm bắt đầu 0.1s');
+createButton('x', () => adjustTime("start", 0.1), 'Tăng điểm bắt đầu 0.1s');
+createButton('c', () => adjustTime("end", -0.1), 'Giảm điểm kết thúc 0.1s');
+createButton('v', () => adjustTime("end", 0.1), 'Tăng điểm kết thúc 0.1s');
+createButton('1', () => adjustPlaybackRate(-1), 'Giảm tốc độ 1%');
+createButton('2', () => adjustPlaybackRate(-2), 'Giảm tốc độ 2%');
+createButton('3', () => adjustPlaybackRate(-3), 'Giảm tốc độ 3%');
+createButton('4', () => adjustPlaybackRate(1), 'Tăng tốc độ 1%');
+createButton('5', () => adjustPlaybackRate(2), 'Tăng tốc độ 2%');
+createButton('6', () => adjustPlaybackRate(3), 'Tăng tốc độ 3%');
+createButton('m', () => toggleInfoDiv(), 'Ẩn/hiện bảng điều khiển');
+createButton('u', () => adjustVolume(0.01), 'Tăng âm lượng');
+createButton('i', () => adjustVolume(-0.01), 'Giảm âm lượng');
+createButton('o', () => changeSegment(-1), 'Chuyển đến đoạn trước');
+createButton('p', () => changeSegment(1), 'Chuyển đến đoạn sau');
+createButton('Del', deleteCurrentSegment, 'Xóa đoạn hiện tại');
+createButton('q', jumpToSegment, 'Nhảy tới đoạn được chỉ định');
+createButton('e', exportSubtitles, 'Xuất file phụ đề');
+createButton('r', importSubtitles, 'Nhập file phụ đề');
+createButton('j', () => adjustSegmentLoopCount(-1), 'Giảm số lần lặp lại của đoạn hiện tại');
+createButton('k', () => adjustSegmentLoopCount(1), 'Tăng số lần lặp lại của đoạn hiện tại');
+createButton('y', splitSegmentAtCurrentTime, 'Chia đoạn tại thời điểm hiện tại');
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
@@ -501,7 +524,7 @@
                 segments.push({
                     start: video.currentTime - 0.15,
                     end: video.currentTime,
-                    playbackRate: video.playbackRate,
+                    playbackRate: 0.5,  // Tốc độ mặc định 50%
                     loopCount: loopCount
                 });
                 currentSegmentIndex = segments.length - 1;
