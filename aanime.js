@@ -149,28 +149,33 @@
 }
 
     function updateInfo() {
-        let segmentsInfo = segments.map((seg, index) => 
-            `Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)} (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})`
-        ).join('<br>');
+    let segmentsInfo = segments.map((seg, index) => {
+        const isCurrentSegment = index === currentSegmentIndex;
+        const segmentStyle = isCurrentSegment ? 'color: #FFD700; font-weight: bold;' : '';
+        return `<div style="${segmentStyle}">
+            Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)}<br>
+            (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})
+        </div>`;
+    }).join('<br>');
 
         infoPanel.innerHTML = `
-            <p>App Luyện Kaiwa Shadowing + nghe, nói</p>
-            <p>PhamHuuTien.com</p>
-            <p>Dùng cho web aanime.biz</p>
-            <p>cả Tiktok, lẫn Youtube,...</p>
-            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
-            <p>Các đoạn đã chọn:</p>
-            ${segmentsInfo}
-        `;
-        infoPanel.appendChild(keyHelpDiv);
+        <p>App Luyện Kaiwa Shadowing</p>
+        <p>PhamHuuTien.com</p>
+        <p>Dùng cho web aanime.biz</p>
+        <p>cả Tiktok, lẫn Youtube,...</p>
+        <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
+        <p>Các đoạn đã chọn:</p>
+        ${segmentsInfo}
+    `;
+    infoPanel.appendChild(keyHelpDiv);
 
-        // Cập nhật thông tin trong currentInfoPanel
-        currentInfoPanel.innerHTML = `
-            <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
-            <p>Thời gian chờ: ${countdownTime.toFixed(2)}s</p>
-        `;
-    }
+    // Cập nhật thông tin trong currentInfoPanel
+    currentInfoPanel.innerHTML = `
+        <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
+        <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
+        <p>Thời gian tập nói: ${countdownTime.toFixed(2)}s</p>
+    `;
+}
 
     function loopVideo() {
         if (looping && !isPaused) {
