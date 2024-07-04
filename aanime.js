@@ -56,6 +56,7 @@
     buttonPanel.style.width = 'auto';
     container.appendChild(buttonPanel);
 
+    // Tạo bảng thông tin riêng cho đoạn hiện tại, lặp lại lần, và thời gian chờ
     const currentInfoPanel = createPanel('10px', '600px');
     currentInfoPanel.style.width = '250px';
     container.appendChild(currentInfoPanel);
@@ -85,6 +86,7 @@
             isDragging = false;
         });
 
+        // Thêm hỗ trợ cho cảm ứng
         element.addEventListener('touchstart', function(e) {
             isDragging = true;
             dragStartX = e.touches[0].clientX;
@@ -139,12 +141,12 @@
     infoPanel.appendChild(keyHelpDiv);
 
     function formatTime(seconds) {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        const milliseconds = Math.floor((seconds % 1) * 1000);
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;
-    }
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const milliseconds = Math.floor((seconds % 1) * 1000);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;
+}
 
     function updateInfo() {
         let segmentsInfo = segments.map((seg, index) => 
@@ -162,6 +164,7 @@
         `;
         infoPanel.appendChild(keyHelpDiv);
 
+        // Cập nhật thông tin trong currentInfoPanel
         currentInfoPanel.innerHTML = `
             <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
             <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
@@ -213,302 +216,402 @@
         }, 100);
     }
 
+    function restartLoop() {
+        isPaused = true;
+        video.pause();
+        currentLoop = 0;
+        currentSegmentIndex = 0;
+        updateInfo();
+        setTimeout(() => {
+            video.currentTime = segments[currentSegmentIndex].start;
+            video.playbackRate = segments[currentSegmentIndex].playbackRate;
+            isPaused = false;
+            video.play();
+        }, 1000);
+    }
+
+    function resetSegments() {
+        isPaused = true;
+        video.pause();
+        segments = [];
+        currentSegmentIndex = -1;
+        currentLoop = 0;
+        looping = false;
+        updateInfo();
+    }
+
     video.addEventListener('timeupdate', loopVideo);
 
-    document.addEventListener('keydown', function(e) {
-        const deltaTime = 1; // Thời gian tăng giảm cho điểm bắt đầu và kết thúc (tính bằng giây)
-        const deltaTimeSmall = 0.1; // Thời gian tăng giảm nhỏ hơn cho điểm bắt đầu và kết thúc (tính bằng giây)
-        const deltaPlaybackRate = 0.01; // Thay đổi tốc độ phát video
-        const deltaVolume = 0.1; // Thay đổi âm lượng
-        switch (e.key) {
-            case 'a':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].start = Math.max(0, segments[currentSegmentIndex].start - deltaTime);
+    function adjustTime(type, delta) {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        if (type === "start") {
+            currentSegment.start = Math.max(0, currentSegment.start + delta);
+            if (currentSegment.start >= currentSegment.end) {
+                currentSegment.start = currentSegment.end - 0.1;
+            }
+            if (video.currentTime < currentSegment.start) {
+                video.currentTime = currentSegment.start;
+            }
+        } else if (type === "end") {
+            currentSegment.end = Math.max(currentSegment.start + 0.1, currentSegment.end + delta);
+        }
+        updateInfo();
+    }
+
+    function adjustPlaybackRate(delta) {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        currentSegment.playbackRate = Math.max(0.1, currentSegment.playbackRate * (1 + delta / 100));
+        video.playbackRate = currentSegment.playbackRate;
+        updateInfo();
+    }
+
+    function adjustVolume(delta) {
+        video.volume = Math.min(1, Math.max(0, video.volume + delta));
+        updateInfo();
+    }
+
+    function toggleInfoDiv() {
+        isHidden = !isHidden;
+        keyHelpDiv.style.display = isHidden ? 'none' : 'block';
+    }
+
+    function adjustFontSize(delta) {
+        fontSize = Math.max(10, fontSize + delta);
+        infoPanel.style.fontSize = `${fontSize}px`;
+        buttonPanel.style.fontSize = `${fontSize}px`;
+        currentInfoPanel.style.fontSize = `${fontSize}px`;
+    }
+
+    function changeSegment(delta) {
+        if (segments.length === 0) return;
+        currentSegmentIndex = (currentSegmentIndex + delta + segments.length) % segments.length;
+        currentLoop = 0;
+        video.currentTime = segments[currentSegmentIndex].start;
+        video.playbackRate = segments[currentSegmentIndex].playbackRate;
+        updateInfo();
+    }
+
+    function deleteCurrentSegment() {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        segments.splice(currentSegmentIndex, 1);
+        if (segments.length === 0) {
+            currentSegmentIndex = -1;
+        } else {
+            currentSegmentIndex = Math.min(currentSegmentIndex, segments.length - 1);
+        }
+        updateInfo();
+    }
+
+    function jumpToSegment() {
+        const segmentNumber = prompt("Enter the segment number to jump to:");
+        if (segmentNumber !== null) {
+            const index = parseInt(segmentNumber) - 1;
+            if (index >= 0 && index < segments.length) {
+                currentSegmentIndex = index;
+                video.currentTime = segments[currentSegmentIndex].start;
+                video.playbackRate = segments[currentSegmentIndex].playbackRate;
+                updateInfo();
+            } else {
+                alert("Invalid segment number");
+            }
+        }
+    }
+
+    function exportSubtitles() {
+        let srtContent = "";
+        segments.forEach((segment, index) => {
+            srtContent += `${index + 1}\n`;
+            srtContent += `${formatTime(segment.start)} --> ${formatTime(segment.end)}\n`;
+            srtContent += `Segment ${index + 1}\n\n`;
+        });
+
+        const blob = new Blob([srtContent], {type: "text/plain;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "subtitles.srt";
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importSubtitles() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.srt';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            reader.onload = readerEvent => {
+                const content = readerEvent.target.result;
+                const parsedSegments = parseSRT(content);
+                if (parsedSegments.length > 0) {
+                    segments = parsedSegments;
+                    currentSegmentIndex = 0;
                     updateInfo();
-                }
-                break;
-            case 's':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].start = Math.min(segments[currentSegmentIndex].start + deltaTime, segments[currentSegmentIndex].end);
-                    updateInfo();
-                }
-                break;
-            case 'd':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start, segments[currentSegmentIndex].end - deltaTime);
-                    updateInfo();
-                }
-                break;
-            case 'f':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].end = Math.min(video.duration, segments[currentSegmentIndex].end + deltaTime);
-                    updateInfo();
-                }
-                break;
-            case 'z':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].start = Math.max(0, segments[currentSegmentIndex].start - deltaTimeSmall);
-                    updateInfo();
-                }
-                break;
-            case 'x':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].start = Math.min(segments[currentSegmentIndex].start + deltaTimeSmall, segments[currentSegmentIndex].end);
-                    updateInfo();
-                }
-                break;
-            case 'c':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start, segments[currentSegmentIndex].end - deltaTimeSmall);
-                    updateInfo();
-                }
-                break;
-            case 'v':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].end = Math.min(video.duration, segments[currentSegmentIndex].end + deltaTimeSmall);
-                    updateInfo();
-                }
-                break;
-            case 'b':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].start = video.currentTime;
+                    alert("Subtitles imported successfully!");
                 } else {
-                    segments.push({ start: video.currentTime, end: video.duration, playbackRate: video.playbackRate, loopCount });
-                    currentSegmentIndex = segments.length - 1;
+                    alert("Failed to import subtitles. Please check the file format.");
                 }
+            }
+        }
+        input.click();
+    }
+
+    function parseSRT(content) {
+    const lines = content.trim().split('\n');
+    const parsedSegments = [];
+    let currentSegment = {};
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line === '') continue;
+
+        if (line.includes('-->')) {
+            const [start, end] = line.split('-->').map(timeStr => {
+                const [h, m, s] = timeStr.trim().split(':');
+                const [seconds, milliseconds] = s.replace(',', '.').split('.');
+                return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(`${seconds}.${milliseconds}`);
+            });
+            currentSegment.start = start;
+            currentSegment.end = end;
+            currentSegment.playbackRate = 0.8;
+            currentSegment.loopCount = loopCount;
+            parsedSegments.push(currentSegment);
+            currentSegment = {};
+        }
+    }
+
+    return parsedSegments;
+}
+
+    function adjustSegmentLoopCount(delta) {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        currentSegment.loopCount = Math.max(1, currentSegment.loopCount + delta);
+        updateInfo();
+    }
+
+    function splitSegmentAtCurrentTime() {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        if (video.currentTime > currentSegment.start && video.currentTime < currentSegment.end) {
+            let newSegment = {
+                start: video.currentTime,
+                end: currentSegment.end,
+                playbackRate: currentSegment.playbackRate,
+                loopCount: currentSegment.loopCount
+            };
+            currentSegment.end = video.currentTime;
+            segments.splice(currentSegmentIndex + 1, 0, newSegment);
+            updateInfo();
+        }
+    }
+
+    function createButton(label, onClick) {
+        const button = document.createElement('button');
+        button.innerText = label;
+        button.style.margin = '4px';
+        button.style.padding = '10px';
+        button.style.width = '60px';
+        button.style.fontSize = '32px';
+        button.style.cursor = 'pointer';
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+        button.style.color = '#FFD700';
+        button.style.border = '1px solid white';
+        button.style.borderRadius = '5px';
+        button.addEventListener('click', onClick);
+        buttonPanel.appendChild(button);
+    }
+
+    createButton('h', () => {
+        looping = false;
+        isPaused = true;
+        video.pause();
+        clearInterval(countdownInterval);
+        updateInfo();
+    });
+    createButton('g', resetSegments);
+    createButton('b', () => {
+        segments.push({
+            start: video.currentTime - 0.15,
+            end: video.currentTime,
+            playbackRate: video.playbackRate,
+            loopCount: loopCount
+        });
+        currentSegmentIndex = segments.length - 1;
+        updateInfo();
+    });
+    createButton('n', () => {
+        if (segments.length > 0) {
+            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+            updateInfo();
+        }
+    });
+    createButton('Enter', () => {
+        if (segments.length > 0) {
+            looping = true;
+            currentLoop = 0;
+            currentSegmentIndex = 0;
+            updateInfo();
+            restartLoop();
+        }
+    });
+    createButton('a', () => adjustTime("start", -1));
+    createButton('s', () => adjustTime("start", 1));
+    createButton('d', () => adjustTime("end", -1));
+    createButton('f', () => adjustTime("end", 1));
+    createButton('z', () => adjustTime("start", -0.1));
+    createButton('x', () => adjustTime("start", 0.1));
+    createButton('c', () => adjustTime("end", -0.1));
+    createButton('v', () => adjustTime("end", 0.1));
+    createButton('1', () => adjustPlaybackRate(-1));
+    createButton('2', () => adjustPlaybackRate(-2));
+    createButton('3', () => adjustPlaybackRate(-3));
+    createButton('4', () => adjustPlaybackRate(1));
+    createButton('5', () => adjustPlaybackRate(2));
+    createButton('6', () => adjustPlaybackRate(3));
+    createButton('m', () => toggleInfoDiv());
+    createButton('u', () => adjustVolume(0.01));
+    createButton('i', () => adjustVolume(-0.01));
+    createButton('o', () => changeSegment(-1));
+    createButton('p', () => changeSegment(1));
+    createButton('Del', deleteCurrentSegment);
+    createButton('q', jumpToSegment);
+    createButton('e', exportSubtitles);
+    createButton('r', importSubtitles);
+    createButton('j', () => adjustSegmentLoopCount(-1));
+    createButton('k', () => adjustSegmentLoopCount(1));
+    createButton('y', splitSegmentAtCurrentTime);
+
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 'b':
+                segments.push({
+                    start: video.currentTime - 0.15,
+                    end: video.currentTime,
+                    playbackRate: video.playbackRate,
+                    loopCount: loopCount
+                });
+                currentSegmentIndex = segments.length - 1;
                 updateInfo();
                 break;
             case 'n':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].end = video.currentTime;
+                if (segments.length > 0) {
+                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+                    updateInfo();
                 }
-                updateInfo();
                 break;
             case 'Enter':
-                looping = true;
-                isPaused = false;
-                currentSegmentIndex = 0;
-                currentLoop = 0;
-                video.currentTime = segments[currentSegmentIndex].start;
-                video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                video.play();
-                updateInfo();
+                if (segments.length > 0) {
+                    looping = true;
+                    currentLoop = 0;
+                    currentSegmentIndex = 0;
+                    updateInfo();
+                    restartLoop();
+                }
                 break;
             case 'h':
                 looping = false;
                 isPaused = true;
                 video.pause();
-                currentSegmentIndex = -1;
-                currentLoop = 0;
+                clearInterval(countdownInterval);
                 updateInfo();
                 break;
             case 'g':
-                segments = [];
-                currentSegmentIndex = -1;
-                currentLoop = 0;
-                updateInfo();
+                resetSegments();
                 break;
-            case 'j':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].loopCount = Math.max(1, segments[currentSegmentIndex].loopCount - 1);
-                    updateInfo();
-                }
+            case 'a':
+                adjustTime("start", -1);
                 break;
-            case 'k':
-                if (segments[currentSegmentIndex]) {
-                    segments[currentSegmentIndex].loopCount++;
-                    updateInfo();
-                }
+            case 's':
+                adjustTime("start", 1);
                 break;
-            case 'm':
-                isHidden = !isHidden;
-                infoPanel.style.display = isHidden ? 'none' : 'block';
-                buttonPanel.style.display = isHidden ? 'none' : 'block';
-                currentInfoPanel.style.display = isHidden ? 'none' : 'block';
+            case 'd':
+                adjustTime("end", -1);
                 break;
-            case '+':
-                fontSize++;
-                infoPanel.style.fontSize = `${fontSize}px`;
-                buttonPanel.style.fontSize = `${fontSize}px`;
-                currentInfoPanel.style.fontSize = `${fontSize}px`;
+            case 'f':
+                adjustTime("end", 1);
                 break;
-            case '-':
-                fontSize--;
-                infoPanel.style.fontSize = `${fontSize}px`;
-                buttonPanel.style.fontSize = `${fontSize}px`;
-                currentInfoPanel.style.fontSize = `${fontSize}px`;
+            case 'z':
+                adjustTime("start", -0.1);
                 break;
-            case 'u':
-                video.volume = Math.min(1, video.volume + deltaVolume);
-                updateInfo();
+            case 'x':
+                adjustTime("start", 0.1);
                 break;
-            case 'i':
-                video.volume = Math.max(0, video.volume - deltaVolume);
-                updateInfo();
+            case 'c':
+                adjustTime("end", -0.1);
                 break;
-            case 'o':
-                if (segments.length > 0) {
-                    currentSegmentIndex = (currentSegmentIndex - 1 + segments.length) % segments.length;
-                    video.currentTime = segments[currentSegmentIndex].start;
-                    video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                    video.play();
-                    updateInfo();
-                }
-                break;
-            case 'p':
-                if (segments.length > 0) {
-                    currentSegmentIndex = (currentSegmentIndex + 1) % segments.length;
-                    video.currentTime = segments[currentSegmentIndex].start;
-                    video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                    video.play();
-                    updateInfo();
-                }
-                break;
-            case 'Delete':
-                if (segments.length > 0) {
-                    segments.splice(currentSegmentIndex, 1);
-                    currentSegmentIndex = Math.min(currentSegmentIndex, segments.length - 1);
-                    if (segments.length === 0) {
-                        currentSegmentIndex = -1;
-                        video.pause();
-                    } else {
-                        video.currentTime = segments[currentSegmentIndex].start;
-                        video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                        video.play();
-                    }
-                    updateInfo();
-                }
+            case 'v':
+                adjustTime("end", 0.1);
                 break;
             case '1':
+                adjustPlaybackRate(-1);
+                break;
             case '2':
+                adjustPlaybackRate(-2);
+                break;
             case '3':
-                if (segments[currentSegmentIndex]) {
-                    const decreaseAmount = parseInt(e.key);
-                    segments[currentSegmentIndex].playbackRate = Math.max(0.1, segments[currentSegmentIndex].playbackRate - (decreaseAmount * deltaPlaybackRate));
-                    updateInfo();
-                }
+                adjustPlaybackRate(-3);
                 break;
             case '4':
+                adjustPlaybackRate(1);
+                break;
             case '5':
+                adjustPlaybackRate(2);
+                break;
             case '6':
-                if (segments[currentSegmentIndex]) {
-                    const increaseAmount = parseInt(e.key) - 3;
-                    segments[currentSegmentIndex].playbackRate = Math.min(3, segments[currentSegmentIndex].playbackRate + (increaseAmount * deltaPlaybackRate));
-                    updateInfo();
-                }
+                adjustPlaybackRate(3);
+                break;
+            case 'm':
+                toggleInfoDiv();
+                break;
+            case '+':
+                adjustFontSize(1);
+                break;
+            case '-':
+                adjustFontSize(-1);
+                break;
+            case 'u':
+                adjustVolume(0.01);
+                break;
+            case 'i':
+                adjustVolume(-0.01);
+                break;
+            case 'o':
+                changeSegment(-1);
+                break;
+            case 'p':
+                changeSegment(1);
+                break;
+            case 'Delete':
+                deleteCurrentSegment();
                 break;
             case 'q':
-                const segmentNumber = prompt('Nhập số đoạn cần nhảy tới:');
-                if (segmentNumber !== null) {
-                    const index = parseInt(segmentNumber) - 1;
-                    if (!isNaN(index) && index >= 0 && index < segments.length) {
-                        currentSegmentIndex = index;
-                        video.currentTime = segments[currentSegmentIndex].start;
-                        video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                        video.play();
-                        updateInfo();
-                    } else {
-                        alert('Số đoạn không hợp lệ.');
-                    }
-                }
+                jumpToSegment();
                 break;
             case 'e':
-                exportSRT();
+                exportSubtitles();
                 break;
             case 'r':
-                importSRT();
+                importSubtitles();
+                break;
+            case 'j':
+                adjustSegmentLoopCount(-1);
+                break;
+            case 'k':
+                adjustSegmentLoopCount(1);
                 break;
             case 'y':
-                if (segments[currentSegmentIndex]) {
-                    const currentTime = video.currentTime;
-                    const currentSegment = segments[currentSegmentIndex];
-                    if (currentTime > currentSegment.start && currentTime < currentSegment.end) {
-                        const newSegment = {
-                            start: currentTime,
-                            end: currentSegment.end,
-                            playbackRate: currentSegment.playbackRate,
-                            loopCount: currentSegment.loopCount
-                        };
-                        currentSegment.end = currentTime;
-                        segments.splice(currentSegmentIndex + 1, 0, newSegment);
-                        updateInfo();
-                    }
-                }
+                splitSegmentAtCurrentTime();
                 break;
             default:
                 break;
         }
     });
 
-    function exportSRT() {
-        let srtContent = '';
-        segments.forEach((seg, index) => {
-            srtContent += `${index + 1}\n${formatTime(seg.start)} --> ${formatTime(seg.end)}\nTốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount}\n\n`;
-        });
-        const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'subtitles.srt';
-        link.click();
-    }
-
-    function importSRT() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.srt';
-        input.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const srtContent = e.target.result;
-                parseSRT(srtContent);
-            };
-            reader.readAsText(file);
-        });
-        input.click();
-    }
-
-    function parseSRT(srtContent) {
-        const srtLines = srtContent.split('\n');
-        const newSegments = [];
-        let currentSegment = null;
-
-        for (let i = 0; i < srtLines.length; i++) {
-            const line = srtLines[i].trim();
-            if (/^\d+$/.test(line)) {
-                if (currentSegment) {
-                    newSegments.push(currentSegment);
-                }
-                currentSegment = { start: 0, end: 0, playbackRate: 1, loopCount: 1 };
-            } else if (/^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$/.test(line)) {
-                const [start, end] = line.split(' --> ');
-                currentSegment.start = parseTime(start);
-                currentSegment.end = parseTime(end);
-            } else if (/^Tốc độ: \d\.\d{2}, Lặp lại: \d+$/.test(line)) {
-                const [, playbackRate, loopCount] = /Tốc độ: (\d\.\d{2}), Lặp lại: (\d+)/.exec(line);
-                currentSegment.playbackRate = parseFloat(playbackRate);
-                currentSegment.loopCount = parseInt(loopCount);
-            }
-        }
-        if (currentSegment) {
-            newSegments.push(currentSegment);
-        }
-
-        segments = newSegments;
-        currentSegmentIndex = -1;
-        updateInfo();
-    }
-
-    function formatTime(seconds) {
-        const date = new Date(0);
-        date.setSeconds(seconds);
-        return date.toISOString().substr(11, 12).replace('.', ',');
-    }
-
-    function parseTime(timeString) {
-        const [hours, minutes, seconds] = timeString.split(':');
-        const [secs, ms] = seconds.split(',');
-        return (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(secs) + (parseInt(ms) / 1000);
-    }
-</script>
-
+    updateInfo();
+    console.clear();
+})();
