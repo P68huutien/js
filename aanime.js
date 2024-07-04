@@ -56,7 +56,6 @@
     buttonPanel.style.width = 'auto';
     container.appendChild(buttonPanel);
 
-    // Tạo bảng thông tin riêng cho đoạn hiện tại, lặp lại lần, và thời gian chờ
     const currentInfoPanel = createPanel('10px', '600px');
     currentInfoPanel.style.width = '250px';
     container.appendChild(currentInfoPanel);
@@ -86,7 +85,6 @@
             isDragging = false;
         });
 
-        // Thêm hỗ trợ cho cảm ứng
         element.addEventListener('touchstart', function(e) {
             isDragging = true;
             dragStartX = e.touches[0].clientX;
@@ -138,44 +136,50 @@
         <p>r: Nhập file phụ đề</p>
         <p>y: Chia đoạn tại thời điểm hiện tại</p>
     `;
-    infoPanel.appendChild(keyHelpDiv);
 
     function formatTime(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-    const milliseconds = Math.floor((seconds % 1) * 1000);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;
-}
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        const milliseconds = Math.floor((seconds % 1) * 1000);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;
+    }
 
     function updateInfo() {
-    let segmentsInfo = segments.map((seg, index) => {
-        const isCurrentSegment = index === currentSegmentIndex;
-        const segmentStyle = isCurrentSegment ? 'color: #FFD700; font-weight: bold;' : '';
-        return `<div style="${segmentStyle}">
-            Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)}<br>
-            (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})
-        </div>`;
-    }).join('<br>');
+        let segmentsInfo = segments.map((seg, index) => {
+            const isCurrentSegment = index === currentSegmentIndex;
+            const segmentStyle = isCurrentSegment ? 'color: #FFD700; font-weight: bold;' : '';
+            return `<div id="segment-${index}" style="${segmentStyle}">
+                Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)}<br>
+                (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})
+            </div>`;
+        }).join('<br>');
 
         infoPanel.innerHTML = `
-        <p>App Luyện Kaiwa Shadowing</p>
-        <p>PhamHuuTien.com</p>
-        <p>Dùng cho web aanime.biz</p>
-        <p>cả Tiktok, lẫn Youtube,...</p>
-        <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
-        <p>Các đoạn đã chọn:</p>
-        ${segmentsInfo}
-    `;
-    infoPanel.appendChild(keyHelpDiv);
+            <p>App Luyện Kaiwa Shadowing</p>
+            <p>PhamHuuTien.com</p>
+            <p>Dùng cho web aanime.biz</p>
+            <p>cả Tiktok, lẫn Youtube,...</p>
+            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
+            <p>Các đoạn đã chọn:</p>
+            <div id="segments-container" style="max-height: 200px; overflow-y: auto;">
+                ${segmentsInfo}
+            </div>
+        `;
+        infoPanel.appendChild(keyHelpDiv);
 
-    // Cập nhật thông tin trong currentInfoPanel
-    currentInfoPanel.innerHTML = `
-        <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-        <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
-        <p>Thời gian tập nói: ${countdownTime.toFixed(2)}s</p>
-    `;
-}
+        currentInfoPanel.innerHTML = `
+            <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
+            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
+            <p>Thời gian tập nói: ${countdownTime.toFixed(2)}s</p>
+        `;
+
+        const segmentsContainer = document.getElementById('segments-container');
+        const currentSegmentElement = document.getElementById(`segment-${currentSegmentIndex}`);
+        if (segmentsContainer && currentSegmentElement) {
+            segmentsContainer.scrollTop = currentSegmentElement.offsetTop - segmentsContainer.offsetTop;
+        }
+    }
 
     function loopVideo() {
         if (looping && !isPaused) {
@@ -366,31 +370,31 @@
     }
 
     function parseSRT(content) {
-    const lines = content.trim().split('\n');
-    const parsedSegments = [];
-    let currentSegment = {};
+        const lines = content.trim().split('\n');
+        const parsedSegments = [];
+        let currentSegment = {};
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line === '') continue;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line === '') continue;
 
-        if (line.includes('-->')) {
-            const [start, end] = line.split('-->').map(timeStr => {
-                const [h, m, s] = timeStr.trim().split(':');
-                const [seconds, milliseconds] = s.replace(',', '.').split('.');
-                return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(`${seconds}.${milliseconds}`);
-            });
-            currentSegment.start = start;
-            currentSegment.end = end;
-            currentSegment.playbackRate = 0.8;
-            currentSegment.loopCount = loopCount;
-            parsedSegments.push(currentSegment);
-            currentSegment = {};
+            if (line.includes('-->')) {
+                const [start, end] = line.split('-->').map(timeStr => {
+                    const [h, m, s] = timeStr.trim().split(':');
+                    const [seconds, milliseconds] = s.replace(',', '.').split('.');
+                    return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(`${seconds}.${milliseconds}`);
+                });
+                currentSegment.start = start;
+                currentSegment.end = end;
+                currentSegment.playbackRate = 0.8;
+                currentSegment.loopCount = loopCount;
+                parsedSegments.push(currentSegment);
+                currentSegment = {};
+            }
         }
-    }
 
-    return parsedSegments;
-}
+        return parsedSegments;
+    }
 
     function adjustSegmentLoopCount(delta) {
         if (segments.length === 0 || currentSegmentIndex === -1) return;
