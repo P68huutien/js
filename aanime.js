@@ -10,6 +10,7 @@
     let countdownTime = 0;
     let countdownInterval;
     let hKeyPressCount = 0;
+    let favorites = [];
 
     function findSuitableContainer() {
         const possibleContainers = [
@@ -135,6 +136,10 @@
         <p>e: Xuất file phụ đề</p>
         <p>r: Nhập file phụ đề</p>
         <p>y: Chia đoạn tại thời điểm hiện tại</p>
+        <p>7: Thêm phụ đề vào danh sách yêu thích</p>
+        <p>8: Phát danh sách yêu thích</p>
+        <p>9: Lưu danh sách yêu thích</p>
+        <p>0: Nhập danh sách yêu thích</p>
     `;
 
     function formatTime(seconds) {
@@ -161,7 +166,8 @@
             <p>Dùng cho web aanime.biz</p>
             <p>cả Tiktok, lẫn Youtube,...</p>
             <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
-            <p>Các đoạn đã chọn:</p>
+            <p>Các đoạn đã chọn: ${segments.length}</p>
+            <p>Mục yêu thích: ${favorites.length}</p>
             <div id="segments-container" style="max-height: 200px; overflow-y: auto;">
                 ${segmentsInfo}
             </div>
@@ -344,7 +350,8 @@
         link.click();
         URL.revokeObjectURL(url);
     }
-function importSubtitles() {
+
+    function importSubtitles() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.srt';
@@ -418,105 +425,168 @@ function importSubtitles() {
         }
     }
 
-    function createButton(label, onClick, tooltip) {
-    const button = document.createElement('button');
-    button.innerText = label;
-    button.style.margin = '4px';
-    button.style.padding = '10px';
-    button.style.width = '60px';
-    button.style.fontSize = '32px';
-    button.style.cursor = 'pointer';
-    button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-    button.style.color = '#FFD700';
-    button.style.border = '1px solid white';
-    button.style.borderRadius = '5px';
-    button.addEventListener('click', onClick);
-    
-    // Thêm tooltip
-    button.title = tooltip;
-    
-    // Thêm hiệu ứng khi hover
-    button.addEventListener('mouseover', () => {
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    });
-    button.addEventListener('mouseout', () => {
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-    });
-    
-    // Thêm hiệu ứng khi nhấn giữ
-    button.addEventListener('mousedown', () => {
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    });
-    button.addEventListener('mouseup', () => {
-        button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    });
-    
-    buttonPanel.appendChild(button);
-}
-createButton('h', () => {
-    looping = false;
-    isPaused = true;
-    video.pause();
-    clearInterval(countdownInterval);
-    updateInfo();
-}, 'Dừng quá trình lặp lại');
-
-createButton('g', resetSegments, 'Reset lại các đoạn');
-
-createButton('b', () => {
-    segments.push({
-        start: video.currentTime - 0.15,
-        end: video.currentTime,
-        playbackRate: 0.5,
-        loopCount: loopCount
-    });
-    currentSegmentIndex = segments.length - 1;
-    updateInfo();
-}, 'Đặt điểm bắt đầu tại thời điểm hiện tại');
-
-createButton('n', () => {
-    if (segments.length > 0) {
-        segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+    function addToFavorites() {
+        if (segments.length === 0 || currentSegmentIndex === -1) return;
+        let currentSegment = segments[currentSegmentIndex];
+        favorites.push({...currentSegment});
+        alert("Đã thêm đoạn hiện tại vào danh sách yêu thích!");
         updateInfo();
     }
-}, 'Đặt điểm kết thúc cho đoạn hiện tại');
 
-createButton('Enter', () => {
-    if (segments.length > 0) {
+    function playFavorites() {
+        if (favorites.length === 0) {
+            alert("Danh sách yêu thích trống!");
+            return;
+        }
+        segments = [...favorites];
+        currentSegmentIndex = 0;
         looping = true;
         currentLoop = 0;
-        currentSegmentIndex = 0;
         updateInfo();
         restartLoop();
     }
-}, 'Bắt đầu lặp lại các đoạn');
 
-createButton('a', () => adjustTime("start", -1), 'Giảm điểm bắt đầu 1s');
-createButton('s', () => adjustTime("start", 1), 'Tăng điểm bắt đầu 1s');
-createButton('d', () => adjustTime("end", -1), 'Giảm điểm kết thúc 1s');
-createButton('f', () => adjustTime("end", 1), 'Tăng điểm kết thúc 1s');
-createButton('z', () => adjustTime("start", -0.1), 'Giảm điểm bắt đầu 0.1s');
-createButton('x', () => adjustTime("start", 0.1), 'Tăng điểm bắt đầu 0.1s');
-createButton('c', () => adjustTime("end", -0.1), 'Giảm điểm kết thúc 0.1s');
-createButton('v', () => adjustTime("end", 0.1), 'Tăng điểm kết thúc 0.1s');
-createButton('1', () => adjustPlaybackRate(-1), 'Giảm tốc độ 1%');
-createButton('2', () => adjustPlaybackRate(-2), 'Giảm tốc độ 2%');
-createButton('3', () => adjustPlaybackRate(-3), 'Giảm tốc độ 3%');
-createButton('4', () => adjustPlaybackRate(1), 'Tăng tốc độ 1%');
-createButton('5', () => adjustPlaybackRate(2), 'Tăng tốc độ 2%');
-createButton('6', () => adjustPlaybackRate(3), 'Tăng tốc độ 3%');
-createButton('m', () => toggleInfoDiv(), 'Ẩn/hiện bảng điều khiển');
-createButton('u', () => adjustVolume(0.01), 'Tăng âm lượng');
-createButton('i', () => adjustVolume(-0.01), 'Giảm âm lượng');
-createButton('o', () => changeSegment(-1), 'Chuyển đến đoạn trước');
-createButton('p', () => changeSegment(1), 'Chuyển đến đoạn sau');
-createButton('Del', deleteCurrentSegment, 'Xóa đoạn hiện tại');
-createButton('q', jumpToSegment, 'Nhảy tới đoạn được chỉ định');
-createButton('e', exportSubtitles, 'Xuất file phụ đề');
-createButton('r', importSubtitles, 'Nhập file phụ đề');
-createButton('j', () => adjustSegmentLoopCount(-1), 'Giảm số lần lặp lại của đoạn hiện tại');
-createButton('k', () => adjustSegmentLoopCount(1), 'Tăng số lần lặp lại của đoạn hiện tại');
-createButton('y', splitSegmentAtCurrentTime, 'Chia đoạn tại thời điểm hiện tại');
+    function saveFavorites() {
+        let srtContent = "";
+        favorites.forEach((segment, index) => {
+            srtContent += `${index + 1}\n`;
+            srtContent += `${formatTime(segment.start)} --> ${formatTime(segment.end)}\n`;
+            srtContent += `Favorite ${index + 1}\n\n`;
+        });
+
+        const blob = new Blob([srtContent], {type: "text/plain;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "favorites.srt";
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function loadFavorites() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.srt';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            reader.onload = readerEvent => {
+                const content = readerEvent.target.result;
+                const parsedFavorites = parseSRT(content);
+                if (parsedFavorites.length > 0) {
+                    favorites = parsedFavorites;
+                    updateInfo();
+                    alert("Danh sách yêu thích đã được nhập thành công!");
+                } else {
+                    alert("Không thể nhập danh sách yêu thích. Vui lòng kiểm tra định dạng file.");
+                }
+            }
+        }
+        input.click();
+    }
+
+    function createButton(label, onClick, tooltip) {
+        const button = document.createElement('button');
+        button.innerText = label;
+        button.style.margin = '4px';
+        button.style.padding = '10px';
+        button.style.width = '60px';
+        button.style.fontSize = '32px';
+        button.style.cursor = 'pointer';
+        button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+        button.style.color = '#FFD700';
+        button.style.border = '1px solid white';
+        button.style.borderRadius = '5px';
+        button.addEventListener('click', onClick);
+        
+        button.title = tooltip;
+        
+        button.addEventListener('mouseover', () => {
+            button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+        });
+        button.addEventListener('mouseout', () => {
+            button.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+        });
+        
+        button.addEventListener('mousedown', () => {
+            button.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+        });
+        button.addEventListener('mouseup', () => {
+            button.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+        });
+        
+        buttonPanel.appendChild(button);
+    }
+
+    createButton('h', () => {
+        looping = false;
+        isPaused = true;
+        video.pause();
+        clearInterval(countdownInterval);
+        updateInfo();
+    }, 'Dừng quá trình lặp lại');
+
+    createButton('g', resetSegments, 'Reset lại các đoạn');
+
+    createButton('b', () => {
+        segments.push({
+            start: video.currentTime - 0.15,
+            end: video.currentTime,
+            playbackRate: 0.5,
+            loopCount: loopCount
+        });
+        currentSegmentIndex = segments.length - 1;
+        updateInfo();
+    }, 'Đặt điểm bắt đầu tại thời điểm hiện tại');
+
+    createButton('n', () => {
+        if (segments.length > 0) {
+            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+            updateInfo();
+        }
+    }, 'Đặt điểm kết thúc cho đoạn hiện tại');
+
+    createButton('Enter', () => {
+        if (segments.length > 0) {
+            looping = true;
+            currentLoop = 0;
+            currentSegmentIndex = 0;
+            updateInfo();
+            restartLoop();
+        }
+    }, 'Bắt đầu lặp lại các đoạn');
+
+    createButton('a', () => adjustTime("start", -1), 'Giảm điểm bắt đầu 1s');
+    createButton('s', () => adjustTime("start", 1), 'Tăng điểm bắt đầu 1s');
+    createButton('d', () => adjustTime("end", -1), 'Giảm điểm kết thúc 1s');
+    createButton('f', () => adjustTime("end", 1), 'Tăng điểm kết thúc 1s');
+    createButton('z', () => adjustTime("start", -0.1), 'Giảm điểm bắt đầu 0.1s');
+    createButton('x', () => adjustTime("start", 0.1), 'Tăng điểm bắt đầu 0.1s');
+    createButton('c', () => adjustTime("end", -0.1), 'Giảm điểm kết thúc 0.1s');
+    createButton('v', () => adjustTime("end", 0.1), 'Tăng điểm kết thúc 0.1s');
+    createButton('1', () => adjustPlaybackRate(-1), 'Giảm tốc độ 1%');
+    createButton('2', () => adjustPlaybackRate(-2), 'Giảm tốc độ 2%');
+    createButton('3', () => adjustPlaybackRate(-3), 'Giảm tốc độ 3%');
+    createButton('4', () => adjustPlaybackRate(1), 'Tăng tốc độ 1%');
+    createButton('5', () => adjustPlaybackRate(2), 'Tăng tốc độ 2%');
+    createButton('6', () => adjustPlaybackRate(3), 'Tăng tốc độ 3%');
+    createButton('m', () => toggleInfoDiv(), 'Ẩn/hiện bảng điều khiển');
+    createButton('u', () => adjustVolume(0.01), 'Tăng âm lượng');
+    createButton('i', () => adjustVolume(-0.01), 'Giảm âm lượng');
+    createButton('o', () => changeSegment(-1), 'Chuyển đến đoạn trước');
+    createButton('p', () => changeSegment(1), 'Chuyển đến đoạn sau');
+    createButton('Del', deleteCurrentSegment, 'Xóa đoạn hiện tại');
+    createButton('q', jumpToSegment, 'Nhảy tới đoạn được chỉ định');
+    createButton('e', exportSubtitles, 'Xuất file phụ đề');
+    createButton('r', importSubtitles, 'Nhập file phụ đề');
+    createButton('j', () => adjustSegmentLoopCount(-1), 'Giảm số lần lặp lại của đoạn hiện tại');
+    createButton('k', () => adjustSegmentLoopCount(1), 'Tăng số lần lặp lại của đoạn hiện tại');
+    createButton('y', splitSegmentAtCurrentTime, 'Chia đoạn tại thời điểm hiện tại');
+    createButton('7', addToFavorites, 'Thêm phụ đề vào danh sách yêu thích');
+    createButton('8', playFavorites, 'Phát danh sách yêu thích');
+    createButton('9', saveFavorites, 'Lưu danh sách yêu thích');
+    createButton('0', loadFavorites, 'Nhập danh sách yêu thích');
 
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
@@ -524,7 +594,7 @@ createButton('y', splitSegmentAtCurrentTime, 'Chia đoạn tại thời điểm 
                 segments.push({
                     start: video.currentTime - 0.15,
                     end: video.currentTime,
-                    playbackRate: 0.5,  // Tốc độ mặc định 50%
+                    playbackRate: 0.5,
                     loopCount: loopCount
                 });
                 currentSegmentIndex = segments.length - 1;
@@ -639,11 +709,103 @@ createButton('y', splitSegmentAtCurrentTime, 'Chia đoạn tại thời điểm 
             case 'y':
                 splitSegmentAtCurrentTime();
                 break;
+            case '7':
+                addToFavorites();
+                break;
+            case '8':
+                playFavorites();
+                break;
+            case '9':
+                saveFavorites();
+                break;
+            case '0':
+                loadFavorites();
+                break;
             default:
                 break;
         }
     });
 
+    // Thêm mã tùy biến con trỏ chuột
+    const customCursorStyle = document.createElement('style');
+    customCursorStyle.textContent = `
+        body {
+            cursor: none;
+        }
+        #custom-cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+        }
+    `;
+    document.head.appendChild(customCursorStyle);
+
+    const customCursor = document.createElement('div');
+    customCursor.id = 'custom-cursor';
+    document.body.appendChild(customCursor);
+
+    const cursorImages = [
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%23FF69B4"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%2387CEEB"><path d="M22 10h-4V7c0-1.1-.9-2-2-2h-3V2l-4 4 4 4V7h3v3h-8c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h7c1.1 0 2-.9 2-2v-4h4l-3-4 3-4z"/></svg>'
+    ];
+
+    let currentCursorIndex = 0;
+
+    function updateCursorPosition(e) {
+        customCursor.style.left = `${e.clientX}px`;
+        customCursor.style.top = `${e.clientY}px`;
+    }
+
+    document.addEventListener('mousemove', updateCursorPosition);
+
+    function changeCursorOnClick(e) {
+        currentCursorIndex = (currentCursorIndex + 1) % cursorImages.length;
+        customCursor.style.backgroundImage = `url('${cursorImages[currentCursorIndex]}')`;
+        customCursor.style.width = '32px';
+        customCursor.style.height = '32px';
+        customCursor.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+            customCursor.style.transform = 'scale(1)';
+        }, 200);
+        createParticles(e.clientX, e.clientY);
+    }
+
+    document.addEventListener('click', changeCursorOnClick);
+
+    function createParticles(x, y) {
+        for (let i = 0; i < 5; i++) {
+            const particle = document.createElement('div');
+            particle.style.position = 'fixed';
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.style.width = '10px';
+            particle.style.height = '10px';
+            particle.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            particle.style.borderRadius = '50%';
+            particle.style.pointerEvents = 'none';
+            particle.style.transition = 'all 0.5s ease-out';
+            document.body.appendChild(particle);
+
+            setTimeout(() => {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 50;
+                particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`;
+                particle.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(particle);
+                }, 500);
+            }, 10);
+        }
+    }
+
     updateInfo();
     console.clear();
+
+    // Khởi tạo con trỏ tùy chỉnh
+    customCursor.style.backgroundImage = `url('${cursorImages[currentCursorIndex]}')`;
+    customCursor.style.width = '32px';
+    customCursor.style.height = '32px';
+    customCursor.style.backgroundSize = 'contain';
+    customCursor.style.backgroundRepeat = 'no-repeat';
 })();
