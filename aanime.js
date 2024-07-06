@@ -31,7 +31,7 @@
     }
 
     video.volume = 0.5;
-    video.playbackRate = 0.5;
+    video.playbackRate = 0.65;
 
     function createPanel(top, left) {
         const panel = document.createElement('div');
