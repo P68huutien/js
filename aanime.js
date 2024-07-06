@@ -392,7 +392,7 @@
                 });
                 currentSegment.start = start;
                 currentSegment.end = end;
-                currentSegment.playbackRate = 0.5;  // Tốc độ mặc định 50%
+                currentSegment.playbackRate = 0.65;  // Tốc độ mặc định 65%
                 currentSegment.loopCount = loopCount;
                 parsedSegments.push(currentSegment);
                 currentSegment = {};
