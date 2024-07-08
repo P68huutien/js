@@ -11,6 +11,8 @@
     let countdownInterval;
     let hKeyPressCount = 0;
     let favorites = [];
+    let positiveMessages = [];
+    let appUsageTime = 0;
 
     function findSuitableContainer() {
         const possibleContainers = [
@@ -588,6 +590,11 @@
     createButton('9', saveFavorites, 'Lưu danh sách yêu thích');
     createButton('0', loadFavorites, 'Nhập danh sách yêu thích');
 
+    // Add new buttons for positive messages
+    createButton('+', addNewPositiveMessage, 'Thêm thông điệp tích cực mới');
+    createButton('👁️', viewAllMessages, 'Xem tất cả thông điệp');
+    createButton('-', deleteMessage, 'Xóa một thông điệp');
+
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
@@ -681,42 +688,6 @@
                 break;
             case 'i':
                 adjustVolume(-0.01);
-                break;
-            case 'o':
-                changeSegment(-1);
-                break;
-            case 'p':
-                changeSegment(1);
-                break;
-            case 'Delete':
-                deleteCurrentSegment();
-                break;
-            case 'q':
-                jumpToSegment();
-                break;
-            case 'e':
-                exportSubtitles();
-                break;
-            case 'r':
-                importSubtitles();
-                break;
-            case 'j':
-                adjustSegmentLoopCount(-1);
-                break;
-            case 'k':
-                adjustSegmentLoopCount(1);
-                break;
-            case 'y':
-                splitSegmentAtCurrentTime();
-                break;
-            case '7':
-                addToFavorites();
-                break;
-            case '8':
-                playFavorites();
-                break;
-            case '9':
-                saveFavorites();
                 break;
             case '0':
                 loadFavorites();
