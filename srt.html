@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Export File</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+  <textarea id="dataInput" placeholder="Nhập dữ liệu thô" rows="10" cols="50"></textarea><br>
+  <input type="text" id="filename" placeholder="Nhập tên file (không cần đuôi .srt)"><br>
+  <button id="exportBtn">Xuất File</button>
+
+  <script>
+    const formatTime = (time) => {
+      const hours = Math.floor(time / 3600000);
+      const minutes = Math.floor((time % 3600000) / 60000);
+      const seconds = Math.floor((time % 60000) / 1000);
+      const milliseconds = time % 1000;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')},${milliseconds.toString().padStart(3, '0')}`;
+    };
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      let input = document.getElementById('dataInput').value.trim(); // Lấy dữ liệu và loại bỏ khoảng trắng dư thừa
+
+      if (!input) {
+        alert('Vui lòng nhập dữ liệu.');
+        return;
+      }
+
+      let data;
+      try {
+        // Đảm bảo chuỗi JSON hợp lệ
+        data = JSON.parse(input);
+      } catch (e) {
+        alert('Dữ liệu không hợp lệ. Vui lòng nhập JSON hợp lệ.');
+        return;
+      }
+
+      const output = data.map(({ id, startTime, endTime, text }, index) => {
+        // Xử lý định dạng thời gian và nội dung văn bản
+        const formattedText = text.replace(/\\n/g, '\n').replace(/\\\"/g, '"');
+        return `${id || index + 1}\n${formatTime(startTime)} --> ${formatTime(endTime)}\n${formattedText}`;
+      }).join('\n\n');
+
+      let filename = document.getElementById('filename').value.trim(); // Lấy tên file và loại bỏ khoảng trắng dư thừa
+
+      if (!filename) {
+        alert('Vui lòng nhập tên file.');
+        return;
+      }
+
+      if (!filename.toLowerCase().endsWith('.srt')) {
+        filename += '.srt'; // Đảm bảo tên file có đuôi .srt nếu không có
+      }
+
+      const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+      saveAs(blob, filename); // Lưu file xuống máy
+    });
+  </script>
+</body>
+</html>
