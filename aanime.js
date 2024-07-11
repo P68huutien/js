@@ -1,4 +1,11 @@
 (function() {
+    function saveCodeToLocalStorage(code) {
+        localStorage.setItem('shadowingAppCode', code);
+    }
+
+    if (window.shadowingAppInitialized) return;
+    window.shadowingAppInitialized = true;
+
     let segments = [];
     let currentSegmentIndex = -1;
     let looping = false;
@@ -24,14 +31,16 @@
 
     const container = findSuitableContainer();
 
-    const video = document.querySelector('video');
-    if (!video) {
-        alert('Không tìm thấy video trên trang.');
-        return;
+    function findVideo() {
+        return document.querySelector('video');
     }
 
-    video.volume = 0.5;
-    video.playbackRate = 0.65;
+    function initVideo(video) {
+        if (video) {
+            video.volume = 0.5;
+            video.playbackRate = 0.65;
+        }
+    }
 
     function createPanel(top, left) {
         const panel = document.createElement('div');
@@ -151,44 +160,48 @@
     }
 
     function updateInfo() {
-        let segmentsInfo = segments.map((seg, index) => {
-            const isCurrentSegment = index === currentSegmentIndex;
-            const segmentStyle = isCurrentSegment ? 'color: #FFD700; font-weight: bold;' : '';
-            return `<div id="segment-${index}" style="${segmentStyle}">
-                Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)}<br>
-                (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})
-            </div>`;
-        }).join('<br>');
+        let video = findVideo();
+        if (video) {
+            let segmentsInfo = segments.map((seg, index) => {
+                const isCurrentSegment = index === currentSegmentIndex;
+                const segmentStyle = isCurrentSegment ? 'color: #FFD700; font-weight: bold;' : '';
+                return `<div id="segment-${index}" style="${segmentStyle}">
+                    Đoạn ${index + 1}: ${formatTime(seg.start)} - ${formatTime(seg.end)}<br>
+                    (Tốc độ: ${seg.playbackRate.toFixed(2)}, Lặp lại: ${seg.loopCount})
+                </div>`;
+            }).join('<br>');
 
-        infoPanel.innerHTML = `
-            <p>App Luyện Kaiwa Shadowing</p>
-            <p>PhamHuuTien.com</p>
-            <p>Dùng cho web aanime.biz</p>
-            <p>cả Tiktok, lẫn Youtube,...</p>
-            <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
-            <p>Các đoạn đã chọn: ${segments.length}</p>
-            <p>Mục yêu thích: ${favorites.length}</p>
-            <div id="segments-container" style="max-height: 200px; overflow-y: auto;">
-                ${segmentsInfo}
-            </div>
-        `;
-        infoPanel.appendChild(keyHelpDiv);
+            infoPanel.innerHTML = `
+                <p>App Luyện Kaiwa Shadowing</p>
+                <p>PhamHuuTien.com</p>
+                <p>Dùng cho web aanime.biz</p>
+                <p>cả Tiktok, lẫn Youtube,...</p>
+                <p>Âm lượng: ${(video.volume * 100).toFixed(0)}% , Tốc độ: ${video.playbackRate.toFixed(2)}</p>
+                <p>Các đoạn đã chọn: ${segments.length}</p>
+                <p>Mục yêu thích: ${favorites.length}</p>
+                <div id="segments-container" style="max-height: 200px; overflow-y: auto;">
+                    ${segmentsInfo}
+                </div>
+            `;
+            infoPanel.appendChild(keyHelpDiv);
 
-        currentInfoPanel.innerHTML = `
-            <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
-            <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
-            <p>Thời gian tập nói: ${countdownTime.toFixed(2)}s</p>
-        `;
+            currentInfoPanel.innerHTML = `
+                <p>Đoạn hiện tại: ${currentSegmentIndex + 1} / ${segments.length}</p>
+                <p>Lặp lại lần: ${currentLoop} / ${segments[currentSegmentIndex]?.loopCount || loopCount}</p>
+                <p>Thời gian tập nói: ${countdownTime.toFixed(2)}s</p>
+            `;
 
-        const segmentsContainer = document.getElementById('segments-container');
-        const currentSegmentElement = document.getElementById(`segment-${currentSegmentIndex}`);
-        if (segmentsContainer && currentSegmentElement) {
-            segmentsContainer.scrollTop = currentSegmentElement.offsetTop - segmentsContainer.offsetTop;
+            const segmentsContainer = document.getElementById('segments-container');
+            const currentSegmentElement = document.getElementById(`segment-${currentSegmentIndex}`);
+            if (segmentsContainer && currentSegmentElement) {
+                segmentsContainer.scrollTop = currentSegmentElement.offsetTop - segmentsContainer.offsetTop;
+            }
         }
     }
 
     function loopVideo() {
-        if (looping && !isPaused) {
+        let video = findVideo();
+        if (video && looping && !isPaused) {
             let currentSegment = segments[currentSegmentIndex];
             if (video.currentTime >= currentSegment.end) {
                 isPaused = true;
@@ -232,59 +245,72 @@
     }
 
     function restartLoop() {
-        isPaused = true;
-        video.pause();
-        currentLoop = 0;
-        currentSegmentIndex = 0;
-        updateInfo();
-        setTimeout(() => {
-            video.currentTime = segments[currentSegmentIndex].start;
-            video.playbackRate = segments[currentSegmentIndex].playbackRate;
-            isPaused = false;
-            video.play();
-        }, 1000);
+        let video = findVideo();
+        if (video) {
+            isPaused = true;
+            video.pause();
+            currentLoop = 0;
+            currentSegmentIndex = 0;
+            updateInfo();
+            setTimeout(() => {
+                video.currentTime = segments[currentSegmentIndex].start;
+                video.playbackRate = segments[currentSegmentIndex].playbackRate;
+                isPaused = false;
+                video.play();
+            }, 1000);
+        }
     }
 
     function resetSegments() {
-        isPaused = true;
-        video.pause();
-        segments = [];
-        currentSegmentIndex = -1;
-        currentLoop = 0;
-        looping = false;
-        updateInfo();
+        let video = findVideo();
+        if (video) {
+            isPaused = true;
+            video.pause();
+            segments = [];
+            currentSegmentIndex = -1;
+            currentLoop = 0;
+            looping = false;
+            updateInfo();
+        }
     }
-
-    video.addEventListener('timeupdate', loopVideo);
 
     function adjustTime(type, delta) {
         if (segments.length === 0 || currentSegmentIndex === -1) return;
         let currentSegment = segments[currentSegmentIndex];
-        if (type === "start") {
-            currentSegment.start = Math.max(0, currentSegment.start + delta);
-            if (currentSegment.start >= currentSegment.end) {
-                currentSegment.start = currentSegment.end - 0.1;
+        let video = findVideo();
+        if (video) {
+            if (type === "start") {
+                currentSegment.start = Math.max(0, currentSegment.start + delta);
+                if (currentSegment.start >= currentSegment.end) {
+                    currentSegment.start = currentSegment.end - 0.1;
+                }
+                if (video.currentTime < currentSegment.start) {
+                    video.currentTime = currentSegment.start;
+                }
+            } else if (type === "end") {
+                currentSegment.end = Math.max(currentSegment.start + 0.1, currentSegment.end + delta);
             }
-            if (video.currentTime < currentSegment.start) {
-                video.currentTime = currentSegment.start;
-            }
-        } else if (type === "end") {
-            currentSegment.end = Math.max(currentSegment.start + 0.1, currentSegment.end + delta);
+            updateInfo();
         }
-        updateInfo();
     }
 
     function adjustPlaybackRate(delta) {
         if (segments.length === 0 || currentSegmentIndex === -1) return;
         let currentSegment = segments[currentSegmentIndex];
-        currentSegment.playbackRate = Math.max(0.1, currentSegment.playbackRate * (1 + delta / 100));
-        video.playbackRate = currentSegment.playbackRate;
-        updateInfo();
+        let video = findVideo();
+        if (video) {
+            currentSegment.playbackRate = Math.max(0.1, currentSegment.playbackRate * (1 + delta / 100));
+            video.playbackRate = currentSegment.playbackRate;
+            updateInfo();
+        }
     }
 
     function adjustVolume(delta) {
-        video.volume = Math.min(1, Math.max(0, video.volume + delta));
-        updateInfo();
+        let video = findVideo();
+        if (video) {
+            video.volume = Math.min(1, Math.max(0, video.volume + delta));
+            updateInfo();
+        }
     }
 
     function toggleInfoDiv() {
@@ -303,9 +329,12 @@
         if (segments.length === 0) return;
         currentSegmentIndex = (currentSegmentIndex + delta + segments.length) % segments.length;
         currentLoop = 0;
-        video.currentTime = segments[currentSegmentIndex].start;
-        video.playbackRate = segments[currentSegmentIndex].playbackRate;
-        updateInfo();
+        let video = findVideo();
+        if (video) {
+            video.currentTime = segments[currentSegmentIndex].start;
+            video.playbackRate = segments[currentSegmentIndex].playbackRate;
+            updateInfo();
+        }
     }
 
     function deleteCurrentSegment() {
@@ -325,9 +354,12 @@
             const index = parseInt(segmentNumber) - 1;
             if (index >= 0 && index < segments.length) {
                 currentSegmentIndex = index;
-                video.currentTime = segments[currentSegmentIndex].start;
-                video.playbackRate = segments[currentSegmentIndex].playbackRate;
-                updateInfo();
+                let video = findVideo();
+                if (video) {
+                    video.currentTime = segments[currentSegmentIndex].start;
+                    video.playbackRate = segments[currentSegmentIndex].playbackRate;
+                    updateInfo();
+                }
             } else {
                 alert("Invalid segment number");
             }
@@ -366,9 +398,6 @@
                     segments = parsedSegments;
                     currentSegmentIndex = 0;
                     updateInfo();
-                    alert("Subtitles imported successfully!");
-                } else {
-                    alert("Failed to import subtitles. Please check the file format.");
                 }
             }
         }
@@ -412,7 +441,8 @@
     function splitSegmentAtCurrentTime() {
         if (segments.length === 0 || currentSegmentIndex === -1) return;
         let currentSegment = segments[currentSegmentIndex];
-        if (video.currentTime > currentSegment.start && video.currentTime < currentSegment.end) {
+        let video = findVideo();
+        if (video && video.currentTime > currentSegment.start && video.currentTime < currentSegment.end) {
             let newSegment = {
                 start: video.currentTime,
                 end: currentSegment.end,
@@ -429,7 +459,6 @@
         if (segments.length === 0 || currentSegmentIndex === -1) return;
         let currentSegment = segments[currentSegmentIndex];
         favorites.push({...currentSegment});
-        alert("Đã thêm đoạn hiện tại vào danh sách yêu thích!");
         updateInfo();
     }
 
@@ -477,9 +506,6 @@
                 if (parsedFavorites.length > 0) {
                     favorites = parsedFavorites;
                     updateInfo();
-                    alert("Danh sách yêu thích đã được nhập thành công!");
-                } else {
-                    alert("Không thể nhập danh sách yêu thích. Vui lòng kiểm tra định dạng file.");
                 }
             }
         }
@@ -522,7 +548,10 @@
     createButton('h', () => {
         looping = false;
         isPaused = true;
-        video.pause();
+        let video = findVideo();
+        if (video) {
+            video.pause();
+        }
         clearInterval(countdownInterval);
         updateInfo();
     }, 'Dừng quá trình lặp lại');
@@ -530,20 +559,26 @@
     createButton('g', resetSegments, 'Reset lại các đoạn');
 
     createButton('b', () => {
-        segments.push({
-            start: video.currentTime - 0.15,
-            end: video.currentTime,
-            playbackRate: 0.5,
-            loopCount: loopCount
-        });
-        currentSegmentIndex = segments.length - 1;
-        updateInfo();
+        let video = findVideo();
+        if (video) {
+            segments.push({
+                start: video.currentTime - 0.15,
+                end: video.currentTime,
+                playbackRate: 0.5,
+                loopCount: loopCount
+            });
+            currentSegmentIndex = segments.length - 1;
+            updateInfo();
+        }
     }, 'Đặt điểm bắt đầu tại thời điểm hiện tại');
 
     createButton('n', () => {
         if (segments.length > 0) {
-            segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
-            updateInfo();
+            let video = findVideo();
+            if (video) {
+                segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+                updateInfo();
+            }
         }
     }, 'Đặt điểm kết thúc cho đoạn hiện tại');
 
@@ -591,19 +626,25 @@
     document.addEventListener('keydown', (event) => {
         switch (event.key) {
             case 'b':
-                segments.push({
-                    start: video.currentTime - 0.15,
-                    end: video.currentTime,
-                    playbackRate: 0.5,
-                    loopCount: loopCount
-                });
-                currentSegmentIndex = segments.length - 1;
-                updateInfo();
+                let video = findVideo();
+                if (video) {
+                    segments.push({
+                        start: video.currentTime - 0.15,
+                        end: video.currentTime,
+                        playbackRate: 0.5,
+                        loopCount: loopCount
+                    });
+                    currentSegmentIndex = segments.length - 1;
+                    updateInfo();
+                }
                 break;
             case 'n':
                 if (segments.length > 0) {
-                    segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
-                    updateInfo();
+                    let video = findVideo();
+                    if (video) {
+                        segments[currentSegmentIndex].end = Math.max(segments[currentSegmentIndex].start + 0.1, video.currentTime);
+                        updateInfo();
+                    }
                 }
                 break;
             case 'Enter':
@@ -618,7 +659,10 @@
             case 'h':
                 looping = false;
                 isPaused = true;
-                video.pause();
+                let videoH = findVideo();
+                if (videoH) {
+                    videoH.pause();
+                }
                 clearInterval(countdownInterval);
                 updateInfo();
                 break;
@@ -670,7 +714,7 @@
             case 'm':
                 toggleInfoDiv();
                 break;
-            case '+':
+			case '+':
                 adjustFontSize(1);
                 break;
             case '-':
@@ -808,4 +852,46 @@
     customCursor.style.height = '32px';
     customCursor.style.backgroundSize = 'contain';
     customCursor.style.backgroundRepeat = 'no-repeat';
+
+    // Thêm MutationObserver để theo dõi các thay đổi trong DOM
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                const video = findVideo();
+                if (video) {
+                    initVideo(video);
+                    video.addEventListener('timeupdate', loopVideo);
+                }
+            }
+        });
+    });
+
+    // Cấu hình và bắt đầu observer
+    const observerConfig = { childList: true, subtree: true };
+    observer.observe(document.body, observerConfig);
+
+    // Khởi tạo ban đầu
+    const initialVideo = findVideo();
+    if (initialVideo) {
+        initVideo(initialVideo);
+        initialVideo.addEventListener('timeupdate', loopVideo);
+    }
+
+    // Lưu code vào localStorage
+    saveCodeToLocalStorage(`(${arguments.callee.toString()})();`);
 })();
+
+// Hàm để chạy code từ localStorage
+function runCodeFromLocalStorage() {
+    const code = localStorage.getItem('shadowingAppCode');
+    if (code) {
+        try {
+            eval(code);
+        } catch (error) {
+            console.error('Error running saved code:', error);
+        }
+    }
+}
+
+// Chạy code khi trang được tải
+runCodeFromLocalStorage();
